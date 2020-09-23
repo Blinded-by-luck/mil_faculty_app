@@ -1,49 +1,41 @@
-from Socket import Socket
+import socket
 import threading
 
-class Server(Socket):
-    def __init__(self):
-        super(Server, self).__init__()
-        self.bind(("localhost", 1234))
-        self.listen(2)
-        print("Server is listening\n")
-
-        self.users = []
-
-    def set_up(self):
-        self.accept_sockets()
-
-    def send_data(self, data):
-        for user in self.users:
-            user.send(data)
-
-    def listen_socket(self, listen_socket=None):
-        print("Listening user")
-
-        while True:
-            data = listen_socket.recv(2048)
-            print(f"User sent {data}")
-
-            self.send_data(data)
-
-    def accept_sockets(self):
-        while True:
-            user_socket, address = self.accept()
-            print(f"User <{address[0]}> connected!")
-            user_socket.send("You are connected".encode("utf-8"))
-            self.users.append(user_socket)
-
-            listen_accepted_user = threading.Thread(target=self.listen_socket,
-                             args=(user_socket, )
-                             )
-            listen_accepted_user.start()
+users = []
+server = socket.socket(
+                    socket.AF_INET,
+                    socket.SOCK_STREAM,
+                )
+server.bind(
+                    ("127.0.0.1", 1234) #localhost
+                )
+server.listen(5)
 
 
+def start_server():
+    while True:
+        user_socket, address = server.accept()
+        print(f"User <{address[0]}> connected!")
+
+        users.append(user_socket)
+        listen_accepted_user = threading.Thread(target=listen_user,
+                     args=(user_socket, )
+                     )
+
+        listen_accepted_user.start()
 
 
+def send_all(data):
+    for user in users:
+        user.send(data)
 
+
+def listen_user(user):
+    print("Listening user")
+    while True:
+        data = user.recv(2048)
+        print("User sent {}".format(data))
+        send_all(data)
 
 if __name__ == '__main__':
-    server = Server()
-    server.set_up()
-    server.accept_sockets()
+    start_server()
