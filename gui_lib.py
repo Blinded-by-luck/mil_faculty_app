@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGraphicsView
 from PyQt5.QtWidgets import QWidget
 from enum import Enum
-from interface_admin import
+#from interface_admin import
 
 # По мере разработки сюда надо добавлять состояния
 class LEFT_MOUSE_BTN_MODE(Enum):
