@@ -1,7 +1,8 @@
 import sys  # sys нужен для передачи argv в QApplication
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import design_menu  # Это наш конвертированный файл дизайна
 from interface_admin import Interface_admin
+from gui_lib import Canvas
 
 class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
     def __init__(self):
@@ -15,8 +16,20 @@ class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
         self.admin_window = QtWidgets.QMainWindow()
         self.interface_admin = Interface_admin()
         self.interface_admin.setupUi(self.admin_window)
-        # Обработчики нажатия надо прикреплять здесь
+
+        # Продолжение конструктора Interface_admin
+        self.interface_admin.scene = QtWidgets.QGraphicsScene()
+        self.interface_admin.scene.setSceneRect(0, 0, 600, 450)
+        self.interface_admin.canvas = Canvas(self.interface_admin.centralwidget, self.interface_admin)
+        # Сделать не через абсолютные координаты
+        self.interface_admin.canvas.setGeometry(QtCore.QRect(180, 70, 600, 450))
+        self.interface_admin.canvas.setScene(self.interface_admin.scene)
+
+        # Обработчики нажатия
         self.interface_admin.add_node_btn.clicked.connect(self.interface_admin.add_node_btn_click)
+        # конец обработчиков события
+
+        #
         self.admin_window.show()
         print('Admin_click')
         self.close()
