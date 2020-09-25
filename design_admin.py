@@ -21,6 +21,12 @@ class Ui_interface_admin(object):
         self.add_node_btn = QtWidgets.QPushButton(self.centralwidget)
         self.add_node_btn.setGeometry(QtCore.QRect(10, 50, 61, 51))
         self.add_node_btn.setObjectName("add_node_btn")
+        self.send_btn = QtWidgets.QPushButton(self.centralwidget)
+        self.send_btn.setGeometry(QtCore.QRect(0, 180, 71, 51))
+        self.send_btn.setObjectName("send_btn")
+        self.download_btn = QtWidgets.QPushButton(self.centralwidget)
+        self.download_btn.setGeometry(QtCore.QRect(0, 290, 71, 31))
+        self.download_btn.setObjectName("download_btn")
         interface_admin.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(interface_admin)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
@@ -38,6 +44,8 @@ class Ui_interface_admin(object):
         interface_admin.setWindowTitle(_translate("interface_admin", "Project"))
         self.add_node_btn.setText(_translate("interface_admin", "Добавить\n"
 "узел"))
+        self.send_btn.setText(_translate("interface_admin", "Отправить"))
+        self.download_btn.setText(_translate("interface_admin", "Загрузить"))
 
 
 if __name__ == "__main__":

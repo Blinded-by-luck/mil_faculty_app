@@ -25,9 +25,11 @@ class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
         self.interface_admin.canvas.setGeometry(QtCore.QRect(180, 70, 600, 450))
         self.interface_admin.canvas.setScene(self.interface_admin.scene)
 
-        # Обработчики нажатия
+        # Привязка событий нажатия
         self.interface_admin.add_node_btn.clicked.connect(self.interface_admin.add_node_btn_click)
-        # конец обработчиков события
+        self.interface_admin.send_btn.clicked.connect(self.interface_admin.send_btn_click)
+        self.interface_admin.download_btn.clicked.connect(self.interface_admin.download_btn_click) # временная кнопка для проверки сериализации
+        # конец
 
         #
         self.admin_window.show()
