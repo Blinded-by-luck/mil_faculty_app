@@ -17,6 +17,7 @@ nodes = []
 class Canvas(QGraphicsView):
     def __init__(self, parent=None, root=None):
         QGraphicsView.__init__(self, parent=parent)
+
         self.interface_admin = root
 
     def mousePressEvent(self, event):

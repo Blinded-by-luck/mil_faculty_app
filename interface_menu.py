@@ -21,6 +21,7 @@ class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
         self.interface_admin.scene = QtWidgets.QGraphicsScene()
         self.interface_admin.scene.setSceneRect(0, 0, 600, 450)
         self.interface_admin.canvas = Canvas(self.interface_admin.centralwidget, self.interface_admin)
+        self.interface_admin.canvas.setStyleSheet("background-color: rgb(255, 255, 255);")
         # Сделать не через абсолютные координаты
         self.interface_admin.canvas.setGeometry(QtCore.QRect(180, 70, 600, 450))
         self.interface_admin.canvas.setScene(self.interface_admin.scene)
