@@ -2,7 +2,8 @@ import sys  # sys нужен для передачи argv в QApplication
 from PyQt5 import QtWidgets, QtCore
 import design_menu  # Это наш конвертированный файл дизайна
 from interface_admin import Interface_admin
-from gui_lib import Canvas
+from gui_lib.Canvas import Canvas
+
 
 class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
     def __init__(self):
@@ -27,7 +28,10 @@ class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
         self.interface_admin.canvas.setScene(self.interface_admin.scene)
 
         # Привязка событий нажатия
-        self.interface_admin.add_node_btn.clicked.connect(self.interface_admin.add_node_btn_click)
+        self.interface_admin.add_computer_btn.clicked.connect(self.interface_admin.add_computer_btn_click)
+        self.interface_admin.add_router_btn.clicked.connect(self.interface_admin.add_router_btn_click)
+        self.interface_admin.add_commutator_btn.clicked.connect(self.interface_admin.add_commutator_btn_click)
+        self.interface_admin.add_concentrator_btn.clicked.connect(self.interface_admin.add_concentrator_btn_click)
         self.interface_admin.send_btn.clicked.connect(self.interface_admin.send_btn_click)
         self.interface_admin.download_btn.clicked.connect(self.interface_admin.download_btn_click) # временная кнопка для проверки сериализации
         # конец

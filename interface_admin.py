@@ -1,8 +1,9 @@
 from PyQt5 import QtWidgets
 import pickle
 
-import gui_lib
+import gui_lib.Node
 import design_admin  # Это наш конвертированный файл дизайна
+from gui_lib.Canvas import set_left_mouse_btn_mode, get_left_mouse_btn_mode,LEFT_MOUSE_BTN_MODE
 
 
 class Interface_admin(QtWidgets.QMainWindow, design_admin.Ui_interface_admin):
@@ -12,14 +13,35 @@ class Interface_admin(QtWidgets.QMainWindow, design_admin.Ui_interface_admin):
         super().__init__()
         self.canvas = None
 
-    def add_node_btn_click(self):
-        gui_lib.left_mouse_btn_mode = gui_lib.LEFT_MOUSE_BTN_MODE.ADD
+    def add_computer_btn_click(self):
+        set_left_mouse_btn_mode(LEFT_MOUSE_BTN_MODE.ADD_COMPUTER)
         self.enable_buttons()
-        print("Add node click")
-        self.add_node_btn.setEnabled(False)
+        print("Add_computer_click() mode=", get_left_mouse_btn_mode())
+        self.add_computer_btn.setEnabled(False)
+
+    def add_router_btn_click(self):
+        set_left_mouse_btn_mode(LEFT_MOUSE_BTN_MODE.ADD_ROUTER)
+        self.enable_buttons()
+        print("Add_router_click() mode=", get_left_mouse_btn_mode())
+        self.add_router_btn.setEnabled(False)
+
+    def add_commutator_btn_click(self):
+        set_left_mouse_btn_mode(LEFT_MOUSE_BTN_MODE.ADD_COMMUTATOR)
+        self.enable_buttons()
+        print("Add_commutator_click() mode=", get_left_mouse_btn_mode())
+        self.add_commutator_btn.setEnabled(False)
+
+    def add_concentrator_btn_click(self):
+        set_left_mouse_btn_mode(LEFT_MOUSE_BTN_MODE.ADD_CONCENTRATOR)
+        self.enable_buttons()
+        print("Add_concentrator_click() mode=", get_left_mouse_btn_mode())
+        self.add_concentrator_btn.setEnabled(False)
 
     def enable_buttons(self):
-        self.add_node_btn.setEnabled(True)
+        self.add_computer_btn.setEnabled(True)
+        self.add_router_btn.setEnabled(True)
+        self.add_commutator_btn.setEnabled(True)
+        self.add_concentrator_btn.setEnabled(True)
 
     def send_btn_click(self):
         # TODO Сериализация и отправка

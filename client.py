@@ -1,28 +1,46 @@
-import socket
-from threading import Thread
-
-client = socket.socket(
-            socket.AF_INET,
-            socket.SOCK_STREAM,
-)
-
-client.connect(
-    ("127.0.0.1", 1234)
-)
-
-def listen_server():
-    while True:
-        data = client.recv(2048) #recieve
-        print("\n", data.decode("utf-8"))
+from Socket import Socket
+from datetime import datetime
+from os import system
+import asyncio
 
 
-def send_server():
-    listen_thread = Thread(target=listen_server)
-    listen_thread.start()
+class Client(Socket):
+    def __init__(self):
+        super(Client, self).__init__()
+        self.messages = ""
 
-    while True:
-        client.send(input().encode("utf-8"))
+    def set_up(self):
+        try:
+            self.socket.connect(
+                ('127.0.0.1', 1234)
+            )
+        except ConnectionRefusedError:
+            print('Сервер недоступен')
+            exit(0)
+
+        self.socket.setblocking(False)
+
+    async def listen_socket(self, listened_socket=None):
+        while True:
+            data = await self.main_loop.sock_recv(self.socket, 2048)
+            self.messages += f"{datetime.now().time()}:  {data.decode('utf-8')}\n"
+
+            system('cls')
+            print(self.messages)
+
+    async def send_data(self, data=None):
+        while True:
+            data = await self.main_loop.run_in_executor(None, input)
+            await self.main_loop.sock_sendall(self.socket, data.encode('utf-8'))
+
+    async def main(self):
+        await asyncio.gather(
+            self.main_loop.create_task(self.listen_socket()),
+            self.main_loop.create_task(self.send_data())
+        )
 
 
-if __name__ == "__main__":
-    send_server() 
+if __name__ == '__main__':
+    client = Client()
+    client.set_up()
+    client.start()
