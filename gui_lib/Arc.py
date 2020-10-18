@@ -1,7 +1,7 @@
+
 """
 Класс для представления ребра
 """
-
 class Arc:
     def __init__(self, node_from, node_to):
         self.node_from = node_from
