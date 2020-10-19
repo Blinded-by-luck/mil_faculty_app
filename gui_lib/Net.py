@@ -55,26 +55,35 @@ class Net:
         return data
 
     def __setstate__(self, data):
-        self.__init__(data[0], data[1], data[2])
         nodes = {}
-        counter = 0
+        self.__init__(data[0], data[1], data[2])
         for key_node in self.computers:
             node = self.computers[key_node]
             nodes[node.id] = node
-            counter += 1
         for key_node in self.routers:
             node = self.routers[key_node]
             nodes[node.id] = node
-            counter += 1
         for key_node in self.commutators:
             node = self.commutators[key_node]
             nodes[node.id] = node
-            counter += 1
-        Node.Counter = counter # Проверить
         self.nodes = nodes
-        arcs = []
-        for i in range(len(data[3])):
-            arcs.append(Arc(nodes[data[3][i][0]], nodes[data[3][i][1]]))
-            nodes[data[3][i][0]].outgoing_arcs.append(arcs[i])
-            nodes[data[3][i][1]].ingoing_arcs.append(arcs[i])
+        arcs = {}
+        for key_arc in data[3]:
+            arcs[Arc.Counter] = Arc(nodes[data[3][key_arc][0]], nodes[data[3][key_arc][1]])
+            nodes[data[3][key_arc][0]].outgoing_arcs.append(arcs[Arc.Counter - 1])
+            nodes[data[3][key_arc][1]].ingoing_arcs.append(arcs[Arc.Counter - 1])
         self.arcs = arcs
+
+
+
+
+
+
+
+
+
+
+
+
+
+

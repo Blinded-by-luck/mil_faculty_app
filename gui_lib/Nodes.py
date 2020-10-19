@@ -6,18 +6,49 @@ from PyQt5.QtGui import QPixmap
 class Node:
     Counter = 0
 
+    @classmethod
+    def reset_counter(cls):
+        cls.Counter = 0
+    """Конструктор для создание вершины. Не должен вызываться обособленно"""
     def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
         if ingoing_arcs is None:
             ingoing_arcs = []
         if outgoing_arcs is None:
             outgoing_arcs = []
         self.id = Node.Counter
+        print("Node init: Node.Counter =", Node.Counter)
         Node.Counter += 1
         self.x = x
         self.y = y
         self.ingoing_arcs = ingoing_arcs
         self.outgoing_arcs = outgoing_arcs
-        self.pixmap_item = None
+        self.custom_label = None
+
+"""
+Класс для представления компьютера
+"""
+class Computer(Node):
+    """Конструтор для создания компьютера, не должен вызываться обособленно"""
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_label=None):
+        super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+        self.custom_label = custom_label
+        custom_label.node = self
+
+    def __getstate__(self):
+        data = [self.x, self.y]
+        return data
+
+    def __setstate__(self, data):
+        self.__init__(x=data[0], y=data[1])
+
+"""
+Класс для представления роутера
+"""
+class Router(Node):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_label=None):
+        super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+        self.custom_label = custom_label
+        custom_label.node = self
 
     def __getstate__(self):
         data = [self.x, self.y]
@@ -28,31 +59,20 @@ class Node:
 
 
 """
-Класс для представления компьютера
-"""
-class Computer(Node):
-
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, pixmap_item=None):
-        super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        self.pixmap_item = pixmap_item
-
-
-"""
-Класс для представления роутера
-"""
-class Router(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, pixmap_item=None):
-        super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        self.pixmap_item = pixmap_item
-
-
-"""
 Класс для представления коммутатора
 """
 class Commutator(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, pixmap_item=None):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_label=None):
         super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        self.pixmap_item = pixmap_item
+        self.custom_label = custom_label
+        custom_label.node = self
+
+    def __getstate__(self):
+        data = [self.x, self.y]
+        return data
+
+    def __setstate__(self, data):
+        self.__init__(x=data[0], y=data[1])
 
 
 def get_appropriate_pixmap(node):
@@ -65,3 +85,5 @@ def get_appropriate_pixmap(node):
             if isinstance(node, Commutator):
                 return QPixmap('Models\\Commutator.png')
     return None
+
+
