@@ -24,7 +24,7 @@ class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
         self.interface_admin.scene.setSceneRect(0, 0, 600, 450)
         self.interface_admin.canvas = Canvas(self.interface_admin.centralwidget, self.interface_admin)
         self.interface_admin.canvas.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.interface_admin.net = Net({}, {}, {}, {}, {})
+        self.interface_admin.canvas.net = Net({}, {}, {}, {}, {})
 
         # Сделать не через абсолютные координаты
         self.interface_admin.canvas.setGeometry(QtCore.QRect(180, 70, 600, 450))
@@ -36,6 +36,7 @@ class Interface_menu(QtWidgets.QMainWindow, design_menu.Ui_MainWindow):
         self.interface_admin.add_commutator_btn.clicked.connect(self.interface_admin.add_commutator_btn_click)
         self.interface_admin.send_btn.clicked.connect(self.interface_admin.send_btn_click)
         self.interface_admin.download_btn.clicked.connect(self.interface_admin.download_btn_click) # временная кнопка для проверки сериализации
+        self.interface_admin.add_arc_btn.clicked.connect(self.interface_admin.add_arc_btn_click)
         # конец
 
         #

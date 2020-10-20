@@ -22,17 +22,30 @@ class Node:
         self.y = y
         self.ingoing_arcs = ingoing_arcs
         self.outgoing_arcs = outgoing_arcs
-        self.custom_label = None
+        self.custom_widget = None
+    """Удаляет вершину со сцены и из модели"""
+    def delete(self):
+        self.delete_from_scene()
+        self.delete_from_model()
+
+    """Удаляет вершину со сцены"""
+    def delete_from_scene(self):
+        pass
+
+    """Удаляет вершину из модели"""
+    def delete_from_model(self):
+        pass
 
 """
 Класс для представления компьютера
 """
 class Computer(Node):
     """Конструтор для создания компьютера, не должен вызываться обособленно"""
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_label=None):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_widget=None):
         super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        self.custom_label = custom_label
-        custom_label.node = self
+        if custom_widget != None:
+            self.custom_label = custom_widget
+            custom_widget.model_item = self
 
     def __getstate__(self):
         data = [self.x, self.y]
@@ -45,10 +58,11 @@ class Computer(Node):
 Класс для представления роутера
 """
 class Router(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_label=None):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_widget=None):
         super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        self.custom_label = custom_label
-        custom_label.node = self
+        if custom_widget != None:
+            self.custom_label = custom_widget
+            custom_widget.model_item = self
 
     def __getstate__(self):
         data = [self.x, self.y]
@@ -62,10 +76,11 @@ class Router(Node):
 Класс для представления коммутатора
 """
 class Commutator(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_label=None):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_widget=None):
         super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        self.custom_label = custom_label
-        custom_label.node = self
+        if custom_widget != None:
+            self.custom_label = custom_widget
+            custom_widget.model_item = self
 
     def __getstate__(self):
         data = [self.x, self.y]
@@ -74,16 +89,5 @@ class Commutator(Node):
     def __setstate__(self, data):
         self.__init__(x=data[0], y=data[1])
 
-
-def get_appropriate_pixmap(node):
-    if isinstance(node, Computer):
-        return QPixmap('Models\\Computer.png')
-    else:
-        if isinstance(node, Router):
-            return QPixmap('Models\\Router.png')
-        else:
-            if isinstance(node, Commutator):
-                return QPixmap('Models\\Commutator.png')
-    return None
 
 
