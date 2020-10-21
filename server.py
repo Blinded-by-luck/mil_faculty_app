@@ -1,60 +1,43 @@
-from Socket import Socket
-import asyncio
+import socket
+import threading
 
-# Table по хорошему нужно вынести в новый файл
-class Table:
-    def __init__(self):
-        pass
+address = "127.0.0.1"
+users = []
+server = socket.socket(
+                    socket.AF_INET,
+                    socket.SOCK_STREAM,
+                )
+server.bind(
+                    (address, 1234) #localhost
+                )
+server.listen(5)
 
-    def change(self, operations=None):
-        # Изменение поля в зависимости от operations
-        pass
+
+def start_server():
+    while True:
+        user_socket, address = server.accept()
+        print(f"Юзер <{address[0]}> присоединился!")
+
+        users.append(user_socket)
+
+        listen_accepted_user = threading.Thread(target=listen_user,
+                     args=(user_socket, )
+                     )
+
+        listen_accepted_user.start()
 
 
-class Server(Socket):
-    def __init__(self):
-        super(Server, self).__init__()
-        print('Сервер запущен')
+def send_all(data):
+    for user in users:
+        user.send(data.encode("utf-8"))
 
-        self.users = []
-        self.table = Table()
 
-    def set_up(self):
-        self.socket.bind(('127.0.0.1', 1234))
-        self.socket.listen(3)
-        self.socket.setblocking(False)
-
-    async def send_data(self, data=None):
-        for user in self.users:
-            await self.main_loop.sock_sendall(user, data)
-
-    async def listen_socket(self, listened_socket=None):
-        if not listened_socket:
-            return
-
-        while True:
-            try:
-                data = await self.main_loop.sock_recv(listened_socket, 2048)
-                # self.table.change(operations)
-                await self.send_data(data)
-            except ConnectionResetError:
-                print('Пользователь вышел')
-                self.users.remove(listened_socket)
-                return
-
-    async def accept_sockets(self):
-        while True:
-            user_socket, address = await self.main_loop.sock_accept(self.socket)
-            print(f"Пользователь <{address[0]}> подключился!")
-
-            self.users.append(user_socket)
-            self.main_loop.create_task(self.listen_socket(user_socket))
-
-    async def main(self):
-        await self.main_loop.create_task(self.accept_sockets())
-
+def listen_user(user):
+    while True:
+        data = user.recv(2048).decode("utf-8")
+        print("Юзер отправил {}".format(data))
+        send_all("Юзер внес изменение: "+data)
 
 if __name__ == '__main__':
-    server = Server()
-    server.set_up()
-    server.start()
+    print(f"Сервер запущен {address} запущен.")
+    start_server()
