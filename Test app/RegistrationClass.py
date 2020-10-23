@@ -11,6 +11,8 @@ class Registration(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.surname_name = ''
         self.group = ''
+        self.result = None
+        self.setClose = False
 
         self.ui.pushButton.clicked.connect(lambda: self.pb_clicked())
 
@@ -27,10 +29,26 @@ class Registration(QtWidgets.QMainWindow):
         for word in text:
             self.group += word
 
+        self.setClose = True
         self.close()
 
     def get_data(self):
         return self.surname_name, self.group
+
+    def closeEvent(self, e):
+        if self.setClose:
+            e.accept()
+        else:
+            self.result = QtWidgets.QMessageBox.question(self, 'Подтверждение',
+                                                         'Вы действительно хотите прекратить выполнение теста?',
+                                                         QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                         QtWidgets.QMessageBox.No)
+
+            if self.result == QtWidgets.QMessageBox.Yes:
+                e.accept()
+                QtWidgets.QWidget.closeEvent(self, e)
+            else:
+                e.ignore()
 
 
 if __name__ == '__main__':

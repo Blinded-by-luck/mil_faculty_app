@@ -12,6 +12,8 @@ class OneAnswer(QtWidgets.QMainWindow):
         self.key = key
         self.user_answer = None
         self.points = 0
+        self.result = None
+        self.setClose = False
 
         self.ui.label.setText(key[1])
         self.ui.label.setWordWrap(True)
@@ -42,10 +44,27 @@ class OneAnswer(QtWidgets.QMainWindow):
             if self.dict[self.key][self.user_answer - 1][2] == 1:
                 self.points += 1
 
+        self.setClose = True
         self.close()
 
     def get_points(self):
         return self.points
+
+    def closeEvent(self, e):
+        if self.setClose:
+            e.accept()
+        else:
+            self.result = QtWidgets.QMessageBox.question(self, 'Подтверждение',
+                                                         'Вы действительно хотите прекратить выполнение теста?',
+                                                         QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                         QtWidgets.QMessageBox.No)
+
+            if self.result == QtWidgets.QMessageBox.Yes:
+                e.accept()
+                QtWidgets.QWidget.closeEvent(self, e)
+            else:
+                e.ignore()
+
 
 
 dictionary = {
@@ -74,5 +93,3 @@ if __name__ == '__main__':
     application = OneAnswer(dictionary, (1,"Как в терминале пользователя предотвратить утечку информации при подключении незарегистрированного терминала в многопользовательском режиме?"), 1)
     application.show()
     app.exec_()
-    print(application.get_points())
-    #sys.exit(app.exec())

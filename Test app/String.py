@@ -13,6 +13,8 @@ class StringAnswer(QtWidgets.QMainWindow):
         self.key = key
         self.user_answer = None
         self.points = 0
+        self.result = None
+        self.setClose = False
 
         self.ui.label.setText(self.key[1])
         self.ui.label_2.setText('Вопрос ' + str(quest_number))
@@ -29,10 +31,26 @@ class StringAnswer(QtWidgets.QMainWindow):
         if self.user_answer == self.dict[self.key][1]:
             self.points += self.dict[self.key][2]
 
+        self.setClose = True
         self.close()
 
     def get_points(self):
         return self.points
+
+    def closeEvent(self, e):
+        if self.setClose:
+            e.accept()
+        else:
+            self.result = QtWidgets.QMessageBox.question(self, 'Подтверждение',
+                                                         'Вы действительно хотите прекратить выполнение теста?',
+                                                         QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                         QtWidgets.QMessageBox.No)
+
+            if self.result == QtWidgets.QMessageBox.Yes:
+                e.accept()
+                QtWidgets.QWidget.closeEvent(self, e)
+            else:
+                e.ignore()
 
 
 dictionary = {
@@ -67,5 +85,4 @@ if __name__ == 'main':
     3, "Как называется процесс регистрации событий, осуществляемый каждым реализованным в системе механизмом защиты?"),
                                1)
     application.show()
-
-    sys.exit(app.exec())
+    app.exec_()
