@@ -74,5 +74,5 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.label.setText(_translate("MainWindow", "Проходной балл не набран"))
-        self.pushButton.setText(_translate("MainWindow", "Далее"))
+        self.pushButton.setText(_translate("MainWindow", "Завершить"))
         self.label_3.setText(_translate("MainWindow", "Вы набрали"))

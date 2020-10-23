@@ -11,6 +11,8 @@ class Password(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.points = points
         self.password = password
+        self.result = None
+        self.setClose = False
 
         self.ui.label_4.setText(str(self.points) + self.word())
         self.ui.label_2.setText(self.password)
@@ -26,7 +28,21 @@ class Password(QtWidgets.QMainWindow):
             return ' баллов'
 
     def pb_clicked(self):
+        self.setClose = True
         self.close()
+
+    def closeEvent(self, e):
+        if self.setClose:
+            e.accept()
+        else:
+            self.result = QtWidgets.QMessageBox.question(self, 'Подтверждение', 'Вы действительно хотите прекратить выполнение теста?',
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+
+            if self.result == QtWidgets.QMessageBox.Yes:
+                e.accept()
+                QtWidgets.QWidget.closeEvent(self, e)
+            else:
+                e.ignore()
 
 
 if __name__ == '__main__':
