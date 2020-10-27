@@ -50,5 +50,3 @@ def main():
     window.show()  # Показываем окно
     app.exec_()  # и запускаем приложение
 
-if __name__ == '__main__':
-    main()

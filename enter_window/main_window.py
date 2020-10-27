@@ -1,5 +1,10 @@
 import pyglet
 from pyglet.gl import *
+import sys
+sys.path.insert(0, '../Test app')
+
+import Test
+
 
 
 def load_cursor(filename):
@@ -44,6 +49,7 @@ def on_key_press(symbol, modifier):
         exit()
     if symbol == key.ENTER:
         window.close()
+        Test.main()
         # здесь писать слк
 
 if __name__ == '__main__':

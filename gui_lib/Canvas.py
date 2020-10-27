@@ -75,12 +75,12 @@ class Canvas(QGraphicsView):
         self.interface_admin = root
         self.net = None
         # Бросать ошибку, если нет файлов
-        self.computer_pixmap = QPixmap('Models\\Computer.png')
-        self.router_pixmap = QPixmap('Models\\Router.png')
-        self.commutator_pixmap = QPixmap('Models\\Commutator.png')
-        self.selected_computer_pixmap = QPixmap('Models\\Selected_computer.png')
-        self.selected_router_pixmap = QPixmap('Models\\Selected_router.png')
-        self.selected_commutator_pixmap = QPixmap('Models\\Selected_commutator.png')
+        self.computer_pixmap = QPixmap('..\\Models\\Computer.png')
+        self.router_pixmap = QPixmap('..\\Models\\Router.png')
+        self.commutator_pixmap = QPixmap('..\\Models\\Commutator.png')
+        self.selected_computer_pixmap = QPixmap('..\\Models\\Selected_computer.png')
+        self.selected_router_pixmap = QPixmap('..\\Models\\Selected_router.png')
+        self.selected_commutator_pixmap = QPixmap('..\\Models\\Selected_commutator.png')
         if self.computer_pixmap.isNull():
             print('computer_pixmap is null')
         self.selected_figures = {}
