@@ -12,11 +12,25 @@ class Arc:
         self.node_from = node_from
         self.node_to = node_to
         self.id = -Arc.Counter
+        self.custom_line = None
         if mode == 0:
             self.node_from.outgoing_arcs.append(self)
             self.node_to.ingoing_arcs.append(self)
         print("Arc init: Arc.Counter =", Arc.Counter)
         Arc.Counter += 1
+
+    """Удаляет ребро со сцены и из модели"""
+    def delete(self):
+        self.delete_from_scene()
+        self.delete_from_model()
+
+    """Удаляет ребро со сцены"""
+    def delete_from_scene(self):
+        pass
+
+    """Удаляет ребро из модели"""
+    def delete_from_model(self):
+        pass
 
     def __getstate__(self):
         data = [self.node_from.id, self.node_to.id]

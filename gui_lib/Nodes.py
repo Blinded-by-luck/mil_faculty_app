@@ -41,11 +41,8 @@ class Node:
 """
 class Computer(Node):
     """Конструтор для создания компьютера, не должен вызываться обособленно"""
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_widget=None):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
         super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        if custom_widget != None:
-            self.custom_label = custom_widget
-            custom_widget.model_item = self
 
     def __getstate__(self):
         data = [self.x, self.y]
@@ -58,11 +55,8 @@ class Computer(Node):
 Класс для представления роутера
 """
 class Router(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_widget=None):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
         super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        if custom_widget != None:
-            self.custom_label = custom_widget
-            custom_widget.model_item = self
 
     def __getstate__(self):
         data = [self.x, self.y]
@@ -76,11 +70,8 @@ class Router(Node):
 Класс для представления коммутатора
 """
 class Commutator(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None, custom_widget=None):
+    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
         super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
-        if custom_widget != None:
-            self.custom_label = custom_widget
-            custom_widget.model_item = self
 
     def __getstate__(self):
         data = [self.x, self.y]

@@ -1,58 +1,20 @@
-from IPython.core.inputtransformer2 import tr
 from PyQt5 import QtWidgets
 import pickle
 
 from PyQt5.QtWidgets import QFileDialog
 
 import design_admin  # Это наш конвертированный файл дизайна
+import design_attacker
 from gui_lib.Arc import Arc
-from gui_lib.Canvas import MOUSE_BTN_MODE, Custom_line, Custom_label
+from gui_lib.Canvas import Custom_line, Custom_label
 from gui_lib.Nodes import Node
 
 
-class Interface_admin(QtWidgets.QMainWindow, design_admin.Ui_interface_admin):
+class Interface_attacker(QtWidgets.QMainWindow, design_attacker.Ui_interface_attacker):
     def __init__(self):
         # Это здесь нужно для доступа к переменным, методам
         # и т.д. в файле design.py
         super().__init__()
-
-    def add_computer_btn_click(self):
-        self.canvas.reset_temp_data()
-        self.canvas.mouse_btn_mode = MOUSE_BTN_MODE.ADD_COMPUTER
-        self.enable_buttons()
-        self.add_computer_btn.setEnabled(False)
-
-    def add_router_btn_click(self):
-        self.canvas.reset_temp_data()
-        self.canvas.mouse_btn_mode = MOUSE_BTN_MODE.ADD_ROUTER
-        self.enable_buttons()
-        self.add_router_btn.setEnabled(False)
-
-    def add_commutator_btn_click(self):
-        self.canvas.reset_temp_data()
-        self.canvas.mouse_btn_mode = MOUSE_BTN_MODE.ADD_COMMUTATOR
-        self.enable_buttons()
-        self.add_commutator_btn.setEnabled(False)
-
-    def add_arc_btn_click(self):
-        self.canvas.reset_temp_data()
-        self.canvas.mouse_btn_mode = MOUSE_BTN_MODE.ADD_ARC
-        self.enable_buttons()
-        self.add_arc_btn.setEnabled(False)
-
-    def enable_buttons(self):
-        self.add_computer_btn.setEnabled(True)
-        self.add_router_btn.setEnabled(True)
-        self.add_commutator_btn.setEnabled(True)
-        self.add_arc_btn.setEnabled(True)
-
-    def send_btn_click(self):
-        # отлов исключений
-        options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "", "Special Files (*.mlbin)", options=options)
-        if file_name:
-            with open(file_name, 'wb') as file:
-                pickle.dump(self.canvas.net, file)
 
     def download_btn_click(self):
         # отлов исключений
@@ -77,3 +39,4 @@ class Interface_admin(QtWidgets.QMainWindow, design_admin.Ui_interface_admin):
                                               x1=arc.node_from.x, y1=arc.node_from.y,
                                               x2=arc.node_to.x, y2=arc.node_to.y)
                     self.canvas.scene().addItem(custom_line)
+
