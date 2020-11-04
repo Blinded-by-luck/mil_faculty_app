@@ -4,10 +4,11 @@ from One import OneAnswer
 from String import StringAnswer
 from RegistrationClass import Registration
 from Dictionary import Questions
+from PasswordWindow import Password
+from NotPasswordWindow import NotPassword
 import numpy as np
 import sys
 import re
-import interface_menu
 
 
 class Test:
@@ -21,12 +22,14 @@ class Test:
         self.MultipleAnswer = MultipleAnswer
         self.OneAnswer = OneAnswer
         self.StringAnswer = StringAnswer
+        self.Password = Password
+        self.NotPassword = NotPassword
         self.application = []
         self.app = []
         self.user_points = 0
         self.true_points = 0
 
-    def show_questions(self, dict, key, quest_number):
+    def show_question(self, dict, key, quest_number):
         if key[0] == 1:
             self.application.append(self.OneAnswer(dict, key, quest_number))   # Один вариант ответа
         elif key[0] == 2:
@@ -35,8 +38,11 @@ class Test:
             self.application.append(self.StringAnswer(dict, key, quest_number))  # Символьный ответ
         self.app.append(QtWidgets.QApplication([]))
         self.application[quest_number - 1].show()
-        self.app[quest_number - 1].exec_()
+        self.app[quest_number - 1].exec()
         self.user_points += self.application[quest_number - 1].get_points()
+        if self.application[quest_number - 1].result is not None:
+            if self.application[quest_number - 1].result == QtWidgets.QMessageBox.Yes:
+                sys.exit(0)
 
     def password_create(self):
         vocabulary = list('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()_+-=,./;{}[]|"')
@@ -66,6 +72,10 @@ class Test:
         application = Registration()
         application.show()
         app.exec_()
+        if application.result is not None:
+            if application.result == QtWidgets.QMessageBox.Yes:
+                sys.exit(0)
+
         self.surname_name, self.group = application.get_data()
 
         # Генерация пароля
@@ -76,7 +86,7 @@ class Test:
         list_of_questions = np.random.choice(quest_ind, self.questions_len, replace=False)
         i = 1
         for quest in list_of_questions:
-            self.show_questions(self.questions, list(self.questions.keys())[quest], i)
+            self.show_question(self.questions, list(self.questions.keys())[quest], i)
             i += 1
 
         print(self.surname_name)
@@ -85,16 +95,26 @@ class Test:
 
         # Проверка на зачет/незачет
         if self.user_points <= self.password_len:
-            print('Ваш пароль:', self.password)
-            interface_menu.main()
+            self.application.append(self.Password(self.user_points, self.password))
+            self.app.append(QtWidgets.QApplication([]))
+            self.application[self.questions_len].show()
+            self.app[self.questions_len].exec_()
+            if self.application[self.questions_len].result is not None:
+                if self.application[self.questions_len].result == QtWidgets.QMessageBox.Yes:
+                    sys.exit(0)
         else:
-            print('Вы не набрали достаточное количество баллов')
+            self.application.append(self.NotPassword(self.user_points))
+            self.app.append(QtWidgets.QApplication([]))
+            self.application[self.questions_len].show()
+            self.app[self.questions_len].exec_()
 
-        sys.exit()
+        sys.exit(0)
+
 
 def main():
     test = Test()
     test.run()
 
 
-
+if __name__ == '__main__':
+    main()
