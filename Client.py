@@ -1,13 +1,17 @@
 from Socket import Socket
+from PyQt5 import QtWidgets
 from datetime import datetime
 from os import system
 import asyncio
+import sys
+from Test_app import TestApp
 
 
 class Client(Socket):
     def __init__(self):
         super(Client, self).__init__()
         self.messages = ""
+        self.username = ''
 
     def set_up(self):
         try:
@@ -31,6 +35,16 @@ class Client(Socket):
     async def send_data(self, data=None):
         while True:
             data = await self.main_loop.run_in_executor(None, input)
+
+            if data == 'run test':
+                app = QtWidgets.QApplication([])
+                application = TestApp()
+                application.show()
+                app.exec()
+                data = 't ' + application.get_token()
+                self.username = application.get_username()
+            else:
+                data = self.username + '#' + data
             await self.main_loop.sock_sendall(self.socket, data.encode('utf-8'))
 
     async def main(self):

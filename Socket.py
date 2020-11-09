@@ -16,7 +16,7 @@ class Socket:
     async def send_data(self, data=None):
         raise NotImplementedError()
 
-    async def listen_socket(self, listened_socket=None):
+    async def listen_socket(self, ip, listened_socket=None):
         raise NotImplementedError()
 
     async def main(self):

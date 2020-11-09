@@ -278,9 +278,7 @@ class TestApp(QtWidgets.QMainWindow):
 
     def pb1_clicked(self):
         text1 = self.ui.lineEdit_3.text()
-        text1 = text1.lower().split(' ')
-        for word in text1:
-            self.username += word
+        self.username = text1
 
         text2 = self.ui.lineEdit_4.text()
         text2 = text2.lower().split(' ')
@@ -364,6 +362,9 @@ class TestApp(QtWidgets.QMainWindow):
 
     def get_token(self):
         return self.password
+
+    def get_username(self):
+        return self.username
 
 
 if __name__ == '__main__':
