@@ -1,9 +1,10 @@
-from Socket import Socket
+from Server_Client.Socket import Socket
 from PyQt5 import QtWidgets
 from datetime import datetime
 from os import system
 import asyncio
-from Test_app import TestApp
+
+from Test_app.Test_app import TestApp
 
 
 class Client(Socket):

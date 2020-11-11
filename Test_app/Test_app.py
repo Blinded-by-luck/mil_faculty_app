@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets
-from TestAppUi import Ui_Form
-from Dictionary import Questions
+from Test_app.Dictionary import Questions
 import sys
 import numpy as np
 import re
+
+from Test_app.TestAppUi import Ui_Form
 
 
 class TestApp(QtWidgets.QMainWindow):

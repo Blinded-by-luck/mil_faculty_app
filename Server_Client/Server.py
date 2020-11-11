@@ -1,4 +1,4 @@
-from Socket import Socket
+from Server_Client.Socket import Socket
 import asyncio
 import pandas as pd
 from datetime import datetime
