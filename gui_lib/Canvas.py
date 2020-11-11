@@ -106,21 +106,21 @@ class Custom_label(QLabel):
 
 class Canvas(QGraphicsView):
 
-    def __init__(self, parent=None, root=None, canvas_working_mode=0):
+    def __init__(self, parent=None, canvas_working_mode=0):
         QGraphicsView.__init__(self, parent=parent)
-        self.interface_admin = root
         self.net = None
         self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
         self.working_mode = canvas_working_mode
-        self.computer_pixmap = QPixmap('..\\Models\\Computer.png')
-        self.router_pixmap = QPixmap('..\\Models\\Router.png')
-        self.commutator_pixmap = QPixmap('..\\Models\\Commutator.png')
-        self.selected_computer_pixmap = QPixmap('..\\Models\\Selected_computer.png')
-        self.selected_router_pixmap = QPixmap('..\\Models\\Selected_router.png')
-        self.selected_commutator_pixmap = QPixmap('..\\Models\\Selected_commutator.png')
-        self.fired_computer_pixmap = QPixmap('..\\Models\\Fired_computer.png')
-        self.fired_router_pixmap = QPixmap('..\\Models\\Fired_router.png')
-        self.fired_commutator_pixmap = QPixmap('..\\Models\\Fired_commutator.png')
+        self.computer_pixmap = QPixmap('../Models/Computer.png')
+        self.router_pixmap = QPixmap('../Models/Router.png')
+        self.commutator_pixmap = QPixmap('../Models/Commutator.png')
+        self.selected_computer_pixmap = QPixmap('../Models/Selected_computer.png')
+        self.selected_router_pixmap = QPixmap('../Models/Selected_router.png')
+        self.selected_commutator_pixmap = QPixmap('../Models/Selected_commutator.png')
+        self.fired_computer_pixmap = QPixmap('../Models/Fired_computer.png')
+        self.fired_router_pixmap = QPixmap('../Models/Fired_router.png')
+        self.fired_commutator_pixmap = QPixmap('../Models/Fired_commutator.png')
+        self.net = None
         # Бросать ошибку, если нет файлов
         if self.computer_pixmap.isNull():
             print('computer_pixmap is null')

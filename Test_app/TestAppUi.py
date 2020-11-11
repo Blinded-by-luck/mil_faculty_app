@@ -1411,9 +1411,16 @@ class Ui_Form(object):
 "}")
         self.pushButton_13.setObjectName("pushButton_13")
         self.stackedWidget.addWidget(self.not_password)
+        self.attacker = QtWidgets.QWidget()
+        self.attacker.setObjectName("attacker")
+        self.download_btn = QtWidgets.QPushButton(self.attacker)
+        self.download_btn.setGeometry(QtCore.QRect(40, 330, 71, 51))
+        self.download_btn.setStyleSheet("background-color: rgb(0, 170, 255);")
+        self.download_btn.setObjectName("download_btn")
+        self.stackedWidget.addWidget(self.attacker)
 
         self.retranslateUi(Form)
-        self.stackedWidget.setCurrentIndex(12)
+        self.stackedWidget.setCurrentIndex(13)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
@@ -1493,3 +1500,4 @@ class Ui_Form(object):
         self.label_65.setText(_translate("Form", "TextLabel"))
         self.label_66.setText(_translate("Form", "Вы не набрали проходного балла"))
         self.pushButton_13.setText(_translate("Form", "Закончить"))
+        self.download_btn.setText(_translate("Form", "Загрузить"))
