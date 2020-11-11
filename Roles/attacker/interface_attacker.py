@@ -1,10 +1,7 @@
 from PyQt5 import QtWidgets
 import pickle
 
-from PyQt5.QtWidgets import QFileDialog
-
-import design_admin  # Это наш конвертированный файл дизайна
-import design_attacker
+from Roles.attacker import design_attacker
 from gui_lib.Arc import Arc
 from gui_lib.Canvas import Custom_line, Custom_label
 from gui_lib.Nodes import Node

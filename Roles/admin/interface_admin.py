@@ -1,10 +1,9 @@
-from IPython.core.inputtransformer2 import tr
 from PyQt5 import QtWidgets
 import pickle
 
 from PyQt5.QtWidgets import QFileDialog
 
-import design_admin  # Это наш конвертированный файл дизайна
+from Roles.admin import design_admin
 from gui_lib.Arc import Arc
 from gui_lib.Canvas import MOUSE_BTN_MODE, Custom_line, Custom_label
 from gui_lib.Nodes import Node
