@@ -8,6 +8,7 @@ class Arc:
     def reset_counter(cls):
         cls.Counter = 1
 
+    # mode=0 означает создание не при загрузке
     def __init__(self, node_from=None, node_to=None, mode=0):
         self.node_from = node_from
         self.node_to = node_to
@@ -17,6 +18,9 @@ class Arc:
             self.node_from.outgoing_arcs.append(self)
             self.node_to.ingoing_arcs.append(self)
         print("Arc init: Arc.Counter =", Arc.Counter)
+        print("Arc id=", self.id)
+        #print("node_from =", self.node_from.id)
+        #print("node_to =", self.node_to.id)
         Arc.Counter += 1
 
     """Удаляет ребро со сцены и из модели"""
