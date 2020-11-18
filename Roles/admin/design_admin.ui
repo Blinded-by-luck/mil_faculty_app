@@ -40,7 +40,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>Models/Computer.png</normaloff>Models/Computer.png</iconset>
+      <normaloff>../../Models/Computer.png</normaloff>../../Models/Computer.png</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -98,7 +98,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>Models/Router.png</normaloff>Models/Router.png</iconset>
+      <normaloff>../../Models/Router.png</normaloff>../../Models/Router.png</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -124,7 +124,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>Models/Commutator.png</normaloff>Models/Commutator.png</iconset>
+      <normaloff>../../Models/Commutator.png</normaloff>../../Models/Commutator.png</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -150,7 +150,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>Models/Arc.png</normaloff>Models/Arc.png</iconset>
+      <normaloff>../../Models/Arc.png</normaloff>../../Models/Arc.png</iconset>
     </property>
     <property name="iconSize">
      <size>

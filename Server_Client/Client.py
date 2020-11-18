@@ -1,3 +1,5 @@
+from Roles.admin.interface_admin import Admin
+from Roles.attacker.interface_attacker import Attacker
 from Server_Client.Socket import Socket
 from PyQt5 import QtWidgets
 from datetime import datetime
@@ -51,6 +53,10 @@ class Client(Socket):
                 data = 't ' + application.get_token()
                 self.username = application.get_username()
                 self.run_test = False
+                app1 = QtWidgets.QApplication([])
+                application1 = Admin()
+                application1.show()
+                app1.exec()
             else:
                 data = await self.main_loop.run_in_executor(None, input)
                 data = self.username + self.separator + self.room + self.separator + data
