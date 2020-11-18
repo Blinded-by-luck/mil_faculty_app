@@ -50,7 +50,7 @@
     <string notr="true">background: #fffdf5;</string>
    </property>
    <property name="currentIndex">
-    <number>12</number>
+    <number>13</number>
    </property>
    <widget class="QWidget" name="welcome">
     <widget class="QPushButton" name="pushButton">
@@ -3012,6 +3012,24 @@ QPushButton:pressed
      </property>
      <property name="text">
       <string>Закончить</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="attacker">
+    <widget class="QPushButton" name="download_btn">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>330</y>
+       <width>71</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(0, 170, 255);</string>
+     </property>
+     <property name="text">
+      <string>Загрузить</string>
      </property>
     </widget>
    </widget>

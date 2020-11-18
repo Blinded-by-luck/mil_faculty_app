@@ -10,12 +10,15 @@ class Node:
     def reset_counter(cls):
         cls.Counter = 0
     """Конструктор для создание вершины. Не должен вызываться обособленно"""
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
+    def __init__(self, x=0, y=0, id=None, ingoing_arcs=None, outgoing_arcs=None):
         if ingoing_arcs is None:
             ingoing_arcs = []
         if outgoing_arcs is None:
             outgoing_arcs = []
-        self.id = Node.Counter
+        if id is None:
+            self.id = Node.Counter
+        else:
+            self.id = id
         print("Node init: Node.Counter =", Node.Counter)
         Node.Counter += 1
         self.x = x
@@ -41,44 +44,47 @@ class Node:
 """
 class Computer(Node):
     """Конструтор для создания компьютера, не должен вызываться обособленно"""
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
-        super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+    def __init__(self, x=0, y=0, id=None, ingoing_arcs=None, outgoing_arcs=None):
+        super().__init__(x=x, y=y, id=id, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+        print("Computer id=", self.id)
 
     def __getstate__(self):
-        data = [self.x, self.y]
+        data = [self.x, self.y, self.id]
         return data
 
     def __setstate__(self, data):
-        self.__init__(x=data[0], y=data[1])
+        self.__init__(x=data[0], y=data[1], id=data[2])
 
 """
 Класс для представления роутера
 """
 class Router(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
-        super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+    def __init__(self, x=0, y=0, id=None, ingoing_arcs=None, outgoing_arcs=None):
+        super().__init__(x=x, y=y, id=id, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+        print("Router id=", self.id)
 
     def __getstate__(self):
-        data = [self.x, self.y]
+        data = [self.x, self.y, self.id]
         return data
 
     def __setstate__(self, data):
-        self.__init__(x=data[0], y=data[1])
+        self.__init__(x=data[0], y=data[1], id=data[2])
 
 
 """
 Класс для представления коммутатора
 """
 class Commutator(Node):
-    def __init__(self, x=0, y=0, ingoing_arcs=None, outgoing_arcs=None):
-        super().__init__(x=x, y=y, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+    def __init__(self, x=0, y=0, id=None, ingoing_arcs=None, outgoing_arcs=None):
+        super().__init__(x=x, y=y, id=id, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
+        print("Commutator id=", self.id)
 
     def __getstate__(self):
-        data = [self.x, self.y]
+        data = [self.x, self.y, self.id]
         return data
 
     def __setstate__(self, data):
-        self.__init__(x=data[0], y=data[1])
+        self.__init__(x=data[0], y=data[1], id=data[2])
 
 
 

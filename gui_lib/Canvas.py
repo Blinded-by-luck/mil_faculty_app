@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QLine, QPointF
 from PyQt5.QtGui import QPixmap, QBrush, QPen, QColor
@@ -108,19 +111,20 @@ class Canvas(QGraphicsView):
 
     def __init__(self, parent=None, root=None, canvas_working_mode=0):
         QGraphicsView.__init__(self, parent=parent)
-        self.interface_admin = root
+        self.interface_window = root
         self.net = None
         self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
+        path = '../../Models/'
         self.working_mode = canvas_working_mode
-        self.computer_pixmap = QPixmap('..\\Models\\Computer.png')
-        self.router_pixmap = QPixmap('..\\Models\\Router.png')
-        self.commutator_pixmap = QPixmap('..\\Models\\Commutator.png')
-        self.selected_computer_pixmap = QPixmap('..\\Models\\Selected_computer.png')
-        self.selected_router_pixmap = QPixmap('..\\Models\\Selected_router.png')
-        self.selected_commutator_pixmap = QPixmap('..\\Models\\Selected_commutator.png')
-        self.fired_computer_pixmap = QPixmap('..\\Models\\Fired_computer.png')
-        self.fired_router_pixmap = QPixmap('..\\Models\\Fired_router.png')
-        self.fired_commutator_pixmap = QPixmap('..\\Models\\Fired_commutator.png')
+        self.computer_pixmap = QPixmap(path + 'Computer.png')
+        self.router_pixmap = QPixmap(path + 'Router.png')
+        self.commutator_pixmap = QPixmap(path + 'Commutator.png')
+        self.selected_computer_pixmap = QPixmap(path + 'Selected_computer.png')
+        self.selected_router_pixmap = QPixmap(path + 'Selected_router.png')
+        self.selected_commutator_pixmap = QPixmap(path + 'Selected_commutator.png')
+        self.fired_computer_pixmap = QPixmap(path + 'Fired_computer.png')
+        self.fired_router_pixmap = QPixmap(path + 'Fired_router.png')
+        self.fired_commutator_pixmap = QPixmap(path + 'Fired_commutator.png')
         # Бросать ошибку, если нет файлов
         if self.computer_pixmap.isNull():
             print('computer_pixmap is null')
@@ -222,7 +226,7 @@ class Canvas(QGraphicsView):
                 point = self.mapToScene(event.pos())
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_COMPUTER:
                     node = Computer(point.x() - self.computer_pixmap.width() / 2,
-                                    point.y() - self.computer_pixmap.height() / 2, [], [])
+                                    point.y() - self.computer_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.computer_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
@@ -230,7 +234,7 @@ class Canvas(QGraphicsView):
 
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_ROUTER:
                     node = Router(point.x() - self.router_pixmap.width() / 2,
-                                    point.y() - self.router_pixmap.height() / 2, [], [])
+                                    point.y() - self.router_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.router_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
@@ -238,7 +242,7 @@ class Canvas(QGraphicsView):
 
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_COMMUTATOR:
                     node = Commutator(point.x() - self.commutator_pixmap.width() / 2,
-                                    point.y() - self.commutator_pixmap.height() / 2, [], [])
+                                    point.y() - self.commutator_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.commutator_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
@@ -253,7 +257,7 @@ class Canvas(QGraphicsView):
                     return
 
                 if self.mouse_btn_mode != MOUSE_BTN_MODE.CHOOSE:
-                    self.interface_admin.enable_buttons()
+                    self.interface_window.enable_buttons()
                     self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
                     self.reset_temp_data()
                     return

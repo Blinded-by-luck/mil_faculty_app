@@ -1,19 +1,39 @@
-from PyQt5 import QtWidgets
+import sys
+
+from PyQt5 import QtWidgets, QtCore
 import pickle
 
 from PyQt5.QtWidgets import QFileDialog
 
 from Roles.admin import design_admin
 from gui_lib.Arc import Arc
-from gui_lib.Canvas import MOUSE_BTN_MODE, Custom_line, Custom_label
+from gui_lib.Canvas import MOUSE_BTN_MODE, Custom_line, Custom_label, Canvas, CANVAS_WORKING_MODE
+from gui_lib.Net import Net
 from gui_lib.Nodes import Node
 
 
-class Interface_admin(QtWidgets.QMainWindow, design_admin.Ui_interface_admin):
+class Admin(QtWidgets.QMainWindow, design_admin.Ui_interface_admin):
     def __init__(self):
-        # Это здесь нужно для доступа к переменным, методам
-        # и т.д. в файле design.py
         super().__init__()
+        self.setupUi(self)
+
+        self.scene = QtWidgets.QGraphicsScene()
+        self.scene.setSceneRect(0, 0, 600, 450)
+        self.canvas = Canvas(self.centralwidget, self, CANVAS_WORKING_MODE.EDIT)
+        self.canvas.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.canvas.net = Net({}, {}, {}, {}, {})
+
+        # Сделать не через абсолютные координаты
+        self.canvas.setGeometry(QtCore.QRect(180, 70, 600, 450))
+        self.canvas.setScene(self.scene)
+
+        # Привязка событий нажатия
+        self.add_computer_btn.clicked.connect(self.add_computer_btn_click)
+        self.add_router_btn.clicked.connect(self.add_router_btn_click)
+        self.add_commutator_btn.clicked.connect(self.add_commutator_btn_click)
+        self.send_btn.clicked.connect(self.send_btn_click)
+        self.download_btn.clicked.connect(self.download_btn_click)
+        self.add_arc_btn.clicked.connect(self.add_arc_btn_click)
 
     def add_computer_btn_click(self):
         self.canvas.reset_temp_data()
@@ -76,3 +96,10 @@ class Interface_admin(QtWidgets.QMainWindow, design_admin.Ui_interface_admin):
                                               x1=arc.node_from.x, y1=arc.node_from.y,
                                               x2=arc.node_to.x, y2=arc.node_to.y)
                     self.canvas.scene().addItem(custom_line)
+
+if __name__ == '__main__':
+    #print(Path.cwd())
+    app = QtWidgets.QApplication([])
+    application = Admin()
+    application.show()
+    sys.exit(app.exec())
