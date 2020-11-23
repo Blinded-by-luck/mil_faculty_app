@@ -26,6 +26,11 @@ class Node:
         self.ingoing_arcs = ingoing_arcs
         self.outgoing_arcs = outgoing_arcs
         self.custom_widget = None
+
+        self.is_under_attack = False
+        # Вершина прекращает быть активной после ее защиты (или не защиты),
+        # т.е. повторные атаки и защиты запрещены
+        self.is_active = True
     """Удаляет вершину со сцены и из модели"""
     def delete(self):
         self.delete_from_scene()

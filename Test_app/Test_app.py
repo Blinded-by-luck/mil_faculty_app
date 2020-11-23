@@ -311,7 +311,7 @@ class TestApp(QtWidgets.QMainWindow):
         if question_type == 'multiple':
             self.correct_points += self.check_answer_multiple(key, self.user_answers[number])
 
-        if self.correct_points <= 8:
+        if self.correct_points < 7:
             self.ui.stackedWidget.setCurrentIndex(11)
             self.ui.label_12.setText(str(self.correct_points) + self.correct_word())
             self.ui.label_2.setText(self.password)
@@ -375,6 +375,9 @@ class TestApp(QtWidgets.QMainWindow):
 
     def get_points(self):
         return self.correct_points
+
+    def get_group(self):
+        return self.group
 
 
 if __name__ == '__main__':

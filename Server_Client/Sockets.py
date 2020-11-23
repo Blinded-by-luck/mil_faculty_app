@@ -1,15 +1,38 @@
-from Server_Client.Socket import Socket
 import asyncio
-import pandas as pd
+import socket
 from datetime import datetime
-import xlsxwriter
+from threading import Thread
+
+import pandas as pd
+
+class Client:
+    def __init__(self, username, token, points, group):
+        self.socket = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_STREAM,
+        )
+        self.username = username
+        self.token = token
+        self.points = str(points)
+        self.group = group
+        self.room = 'none'
+        # separator используется для стабильности при передаче сообщений. Помимо того, что серверу и клиенту нужно
+        # передавать сообщения пользователей, ему еще нужно передавать информацию о комнате, имени игрока и так далее.
+        # Поэтому нужно использовать набор символов, который пользователь вряд ли когда-то введет
+        # Также separator на сервере и клиенте должен быть одинаковым
+        self.separator = '$%6h))/.qyjrgKUTFV^Shc8~~63,c'
+        self.role = 'none'
+        self.first_message = True
 
 
-class Server(Socket):
+class Server:
     def __init__(self):
-        super(Server, self).__init__()
-        print('Сервер запущен')
-        self.slovar = {'ip': [], 'token': [], 'ФИО': [], 'Баллы за тест': [], 'Баллы за практику': []}
+        self.socket = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_STREAM,
+        )
+        self.main_loop = asyncio.new_event_loop()
+        self.dictionary = {'ip': [], 'token': [], 'ФИО': [], 'Баллы за тест': [], 'Баллы за практику': []}
         self.users = []
         # separator используется для стабильности при передаче сообщений. Помимо того, что серверу и клиенту нужно
         # передавать сообщения пользователей, ему еще нужно передавать информацию о комнате, имени игрока и так далее.
@@ -22,39 +45,33 @@ class Server(Socket):
         # Если используем сервер для практической части, а не для общения
         self.flag_practical = True
         self.attack_defend = {'атаковать комп1 ddos': 'защитить комп1 ddos',
-                              'атаковать комп1 пароль': 'защитить комп1 пароль'}
+                                     'атаковать комп1 пароль': 'защитить комп1 пароль'}
 
-        self.points_practika = 0
+        self.points_practice = 0
         self.info = {'room_1': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_1.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_2': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_2.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_3': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_3.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_4': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_4.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_5': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_5.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_6': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_6.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_7': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_7.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_8': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_8.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_9': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_9.txt',
-                                'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_10': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_10.txt',
-                                 'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_11': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_11.txt',
-                                 'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
-                     'room_12': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_12.txt',
-                                 'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]}}
-
-    # Настройка сервера
-    def set_up(self):
-        self.socket.bind(('127.0.0.1', 1234))
-        self.socket.listen(3)
-        self.socket.setblocking(False)
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_2': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_2.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_3': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_3.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_4': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_4.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_5': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_5.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_6': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_6.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_7': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_7.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_8': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_8.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_9': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_9.txt',
+                                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_10': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_10.txt',
+                                        'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_11': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_11.txt',
+                                        'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
+                            'room_12': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_12.txt',
+                                        'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]}}
 
     # Отправка сообщений клиентам
     async def send_data(self, room, data=None, socket=None):
@@ -68,7 +85,6 @@ class Server(Socket):
     # Просмотр сообщений от клиентов
     async def listen_socket(self, ip, listened_socket=None):
         if not listened_socket:
-
             return
 
         while True:
@@ -97,8 +113,8 @@ class Server(Socket):
                     self.available_rooms.remove(room)
                     self.info['room_' + str(room)]['role'].remove(role)
 
-                    data = 'first message' + self.separator + username + ' присоединился к ' + self.separator + str(room) + \
-                           self.separator + ' комнате. ' + self.separator + username + role_sign
+                    data = 'first message' + self.separator + username + ' присоединился к ' + self.separator \
+                           + str(room) + self.separator + ' комнате. ' + self.separator + username + role_sign
                     await self.send_data('room_' + str(room), data.encode('utf-8'))
 
                     data = 'role' + self.separator + role
@@ -120,7 +136,8 @@ class Server(Socket):
 
                         message_to_send = '(' + username + ') ' + message
                         print(username + '(' + room + ')' + ':', message)
-                        self.info[room]['text'] += str(datetime.now().time()).split('.')[0] + ':' + message_to_send
+                        self.info[room]['text'] += str(datetime.now().time()).split('.')[
+                                                              0] + ':' + message_to_send
 
                         await self.send_data(room, message_to_send.encode('utf-8'))
 
@@ -135,6 +152,24 @@ class Server(Socket):
                         self.users.remove(listened_socket)
                 return
 
+    # Создание эксель таблицы
+    def create_dict(self, address=None, token=None, username=None, score=None, score_practice=None):
+        if address is not None:
+            self.dictionary['ip'].append(address)
+            self.dictionary['token'].append(token)
+            self.dictionary['ФИО'].append(username)
+            self.dictionary['Баллы за тест'].append(str(score))
+        if score_practice is None:
+            self.dictionary['Баллы за практику'].append('0')
+        else:
+            for i in range(len(self.dictionary['ФИО'])):
+                if username == self.dictionary['ФИО'][i]:
+                    self.dictionary['Баллы за практику'][i] = str(score_practice)
+        data_m = pd.DataFrame(self.dictionary)
+        writer = pd.ExcelWriter('data.xlsx', engine='xlsxwriter')
+        data_m.to_excel(writer, 'Sheet1')
+        writer.save()
+
     # Подключаем пользователей
     async def accept_sockets(self):
         i = 0
@@ -147,6 +182,7 @@ class Server(Socket):
 
     # Практическая часть
     async def practical_part(self, data_decode, socket):
+        #print('Got message: ', data_decode)
         username = data_decode.split(self.separator)[0]
         room = data_decode.split(self.separator)[1]
         role = data_decode.split(self.separator)[2]
@@ -159,9 +195,10 @@ class Server(Socket):
 
         # Если пришло сообщение от атакующего
         if role == 'attack':
+            print('Message from attacker: ', message)
             # Если команда верная
             if message in self.attack_defend.keys():
-                # Записываем в self.info[room]['last_action'] команду, чтобы защищающийся ввел команду, которая
+                # Записываем в self.server.info[room]['last_action'] команду, чтобы защищающийся ввел команду, которая
                 # защищает конкретно от этого вида атаки
                 self.info[room]['last_action'] = message
                 message_to_send = 'attack_correct' + self.separator + username + ' предпринял атаку (' + message + ')'
@@ -178,10 +215,11 @@ class Server(Socket):
                 await self.send_data(room, message_to_send.encode('utf-8'), socket=socket)
 
             # Обновление значений в эксель таблице
-            self.create_dict(username=username, score_practika=self.info[room]['points'][0])
+            self.create_dict(username=username, score_practice=self.info[room]['points'][0])
 
         # Если пришло сообщение от защищающегося
         else:
+            print('Message from defender:', message)
             # Если атакующий еще не совершил атаку
             if self.info[room]['last_action'] == '':
                 message_to_send = 'incorrect' + self.separator + username + ', на данную сеть не совершенно никаких атак'
@@ -207,25 +245,7 @@ class Server(Socket):
                     await self.send_data(room, message_to_send.encode('utf-8'), socket=socket)
 
             # Обновление значений в эксель таблице
-            self.create_dict(username=username, score_practika=self.info[room]['points'][1])
-
-    # Создание эксель таблицы
-    def create_dict(self, address=None, token=None, username=None, score=None, score_practika=None):
-        if address is not None:
-            self.slovar['ip'].append(address)
-            self.slovar['token'].append(token)
-            self.slovar['ФИО'].append(username)
-            self.slovar['Баллы за тест'].append(str(score))
-        if score_practika is None:
-            self.slovar['Баллы за практику'].append('0')
-        else:
-            for i in range(len(self.slovar['ФИО'])):
-                if username == self.slovar['ФИО'][i]:
-                    self.slovar['Баллы за практику'][i] = str(score_practika)
-        data_m = pd.DataFrame(self.slovar)
-        writer = pd.ExcelWriter('data.xlsx', engine='xlsxwriter')
-        data_m.to_excel(writer, 'Sheet1')
-        writer.save()
+            self.create_dict(username=username, score_practice=self.info[room]['points'][1])
 
     # Создание текстового файла, когда один из игроков в комнате закрывает приложение
     def create_txt(self, room, message):
@@ -236,8 +256,17 @@ class Server(Socket):
     async def main(self):
         await self.main_loop.create_task(self.accept_sockets())
 
+    def start(self):
+        self.main_loop.run_until_complete(self.main())
 
-if __name__ == '__main__':
-    server = Server()
-    server.set_up()
-    server.start()
+
+
+
+
+
+
+
+
+
+
+
