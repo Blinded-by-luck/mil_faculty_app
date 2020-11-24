@@ -3,7 +3,7 @@ from pathlib import Path
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QLine, QPointF
-from PyQt5.QtGui import QPixmap, QBrush, QPen, QColor
+from PyQt5.QtGui import QPixmap, QBrush, QPen, QColor, QFont
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsPixmapItem, QLabel, QGraphicsPathItem, QGraphicsRectItem, \
     QGraphicsLineItem
 from enum import Enum
@@ -71,6 +71,12 @@ class Custom_label(QLabel):
             self.model_item.custom_widget = self
             if pixmap is not None:
                 self.setGeometry(self.model_item.x, self.model_item.y, pixmap.width(), pixmap.height())
+                self.title = QLabel()
+                self.title.setText(str(self.model_item.id))
+                self.title.setGeometry(self.model_item.x + pixmap.width() / 2,
+                                       self.model_item.y + pixmap.height() / 3.8, pixmap.width(), 10)
+                self.title.setStyleSheet("background:transparent")
+                self.title.setFont(QFont('Times New Roman', 10))
 
     def mousePressEvent(self, event):
         if self.canvas.working_mode == CANVAS_WORKING_MODE.EDIT:
@@ -97,13 +103,13 @@ class Custom_label(QLabel):
                         self.canvas.unselect_and_remove_figure(self)
                         print("Custom_label unselected")
                     event.accept()
-        if self.canvas.working_mode == CANVAS_WORKING_MODE.GAME:
-            super().mousePressEvent(event)
-            if event.button() == Qt.LeftButton:
-                if not self.is_select:
-                    self.canvas.make_selected(self)
-                    print("Custom_label selected")
-                event.accept()
+        # if self.canvas.working_mode == CANVAS_WORKING_MODE.GAME:
+        #     super().mousePressEvent(event)
+        #     if event.button() == Qt.LeftButton:
+        #         if not self.is_select:
+        #             self.canvas.make_selected(self)
+        #             print("Custom_label selected")
+        #         event.accept()
 
 
 
@@ -183,7 +189,7 @@ class Canvas(QGraphicsView):
     def unselect_figure(self, figure):
         figure.is_select = False
         if isinstance(figure, Custom_label):
-            pixmap = self.get_appropriate_pixmap(figure.model_item)
+            pixmap = self.get_appropriate_pixmap(figure.model_item.__class__)
             figure.setPixmap(pixmap)
         else:
             figure.setPen(Custom_line.dark_pen)
@@ -202,17 +208,27 @@ class Canvas(QGraphicsView):
         self.node_to = None
         self.unselect_all_figures()
 
-
-    def get_appropriate_pixmap(self, node):
-        if isinstance(node, Computer):
+    def get_appropriate_pixmap(self, class_node):
+        if class_node is Computer:
             return self.computer_pixmap
         else:
-            if isinstance(node, Router):
+            if class_node is Router:
                 return self.router_pixmap
             else:
-                if isinstance(node, Commutator):
+                if class_node is Commutator:
                     return self.commutator_pixmap
-        return None
+        return ValueError("Unrecognized class")
+
+    def get_appropriate_fired_pixmap(self, class_node):
+        if class_node is Computer:
+            return self.fired_computer_pixmap
+        else:
+            if class_node is Router:
+                return self.fired_router_pixmap
+            else:
+                if class_node is Commutator:
+                    return self.fired_commutator_pixmap
+        return ValueError("Unrecognized class")
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -230,6 +246,7 @@ class Canvas(QGraphicsView):
                     custom_label = Custom_label(pixmap=self.computer_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
+                    self.scene().addWidget(custom_label.title)
                     return
 
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_ROUTER:
@@ -238,6 +255,7 @@ class Canvas(QGraphicsView):
                     custom_label = Custom_label(pixmap=self.router_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
+                    self.scene().addWidget(custom_label.title)
                     return
 
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_COMMUTATOR:
@@ -246,6 +264,7 @@ class Canvas(QGraphicsView):
                     custom_label = Custom_label(pixmap=self.commutator_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
+                    self.scene().addWidget(custom_label.title)
                     return
             if event.button() == Qt.RightButton:
                 # если что расписать подробнее

@@ -4,11 +4,11 @@ from PyQt5.QtGui import QPixmap
 Абстрактный класс вершина для представления узлов в сети
 """
 class Node:
-    Counter = 0
+    Counter = 1
 
     @classmethod
     def reset_counter(cls):
-        cls.Counter = 0
+        cls.Counter = 1
     """Конструктор для создание вершины. Не должен вызываться обособленно"""
     def __init__(self, x=0, y=0, id=None, ingoing_arcs=None, outgoing_arcs=None):
         if ingoing_arcs is None:

@@ -102,6 +102,39 @@ font-size: 12pt;
 font-family: Century Gothic, sans-serif;</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="download_btn">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>20</y>
+      <width>271</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton
+{
+	background: #03a9f4;
+	color: #fff;
+	border-radius: 15px;
+	font-size: 12pt;
+	font-family: Century Gothic, sans-serif;
+}
+
+QPushButton:hover
+{
+    background-color:#64bee8;
+}
+
+QPushButton:pressed
+{
+    background-color:#03a9f4;
+}</string>
+    </property>
+    <property name="text">
+     <string>Загрузить карту</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>

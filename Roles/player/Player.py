@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QFileDialog
 from gui_lib.Arc import Arc
 from gui_lib.Canvas import Custom_line, Custom_label, Canvas, CANVAS_WORKING_MODE
 from gui_lib.Net import Net
-from gui_lib.Nodes import Node
+from gui_lib.Nodes import Node, Computer
 
 
 class Player(QtWidgets.QMainWindow, Ui_interface_player):
@@ -34,6 +34,7 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         self.canvas.setScene(self.scene)
         # Привязка событий нажатия
         self.send_msg_btn.clicked.connect(self.send_msg_btn_click)
+        self.download_btn.clicked.connect(self.download_btn_click)
 
     def restore_map(self, data):
         # отлов исключений
@@ -54,6 +55,31 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                                       x1=arc.node_from.x, y1=arc.node_from.y,
                                       x2=arc.node_to.x, y2=arc.node_to.y)
             self.canvas.scene().addItem(custom_line)
+
+    def download_btn_click(self):
+        # отлов исключений
+        self.canvas.reset_temp_data()
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(self, "Открыть файл", "", "Special Files (*.mlbin)", options=options)
+        if file_name:
+            with open(file_name, 'rb') as file:
+                Node.reset_counter()
+                Arc.reset_counter()
+                self.canvas.net = pickle.load(file)
+                self.scene.clear()
+                for key_node in self.canvas.net.nodes:
+                    node = self.canvas.net.nodes[key_node]
+                    pixmap = self.canvas.get_appropriate_pixmap(node.__class__)
+                    custom_label = Custom_label(pixmap=pixmap, canvas=self.canvas, model_item=node)
+                    self.canvas.scene().addWidget(custom_label)
+                    self.canvas.scene().addWidget(custom_label.title)
+
+                for key_arc in self.canvas.net.arcs:
+                    arc = self.canvas.net.arcs[key_arc]
+                    custom_line = Custom_line(canvas=self.canvas, model_item=arc,
+                                              x1=arc.node_from.x, y1=arc.node_from.y,
+                                              x2=arc.node_to.x, y2=arc.node_to.y)
+                    self.canvas.scene().addItem(custom_line)
 
     # Считывание сообщений с сервера
     # FIXME переделать структуру сообщений
@@ -79,6 +105,9 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             # Если атака корректна, то происходит обработка сообщения в зависимости от объекта и типа атаки
             elif data_decode.split(self.client.separator)[0] == 'attack_correct':
                 data_decode = data_decode.split(self.client.separator)[1]
+                # Пример вызова функции атаки. Вместо 2 нужен id,
+                # вместо Computer - Router или Commutator (в зависимости от команды)
+                self.attack_node(2, Computer)
                 # attack представляет из себя одну из строк из списка ('атаковать комп1 ddos', 'атаковать комп1 пароль')
                 attack = data_decode.split(' предпринял атаку (')[1].split(')')[0]
 
@@ -87,6 +116,9 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             elif data_decode.split(self.client.separator)[0] == 'defend_correct':
                 data_decode = data_decode.split(self.client.separator)[1]
                 # defend представляет из себя одну из строк из списка ('защитить комп1 ddos', 'защитить комп1 пароль')
+                # Пример вызова функции защиты. Вместо 2 нужен id,
+                # вместо Computer - Router или Commutator (в зависимости от команды)
+                self.defend_node(2, Computer)
                 defend = data_decode.split(' предпринял защиту (')[1].split(')')[0]
 
             # Если сервер настроен на общение
@@ -97,6 +129,35 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             # FIXME добавить получение карты передавать data (чистую) в restore_map()
             # FIXME Незаконно менять объекты основного потока не в основном потоке
             self.textBrowser.append('>>> ' + data_decode)
+
+    # Помечает соответствующую вершину красным
+    # class_type - это тип класса: Computer, Router, Commutator
+    # Возвращает true, если атака возможна и false иначе
+    def attack_node(self, id, class_type):
+        if id in self.canvas.net.nodes:
+            node = self.canvas.net.nodes[id]
+            if node.is_active:
+                if not node.is_under_attack:
+                    pixmap = self.canvas.get_appropriate_fired_pixmap(class_type)
+                    node.custom_widget.setPixmap(pixmap)
+                    node.is_under_attack = True
+                    return True
+        return False
+
+    # Помечает соответствующую вершину черным
+    # class_type - это тип класса: Computer, Router, Commutator
+    # Возвращает true, если защита возможна и false иначе
+    def defend_node(self, id, class_type):
+        if id in self.canvas.net.nodes:
+            node = self.canvas.net.nodes[id]
+            if node.is_active:
+                if node.is_under_attack:
+                    pixmap = self.canvas.get_appropriate_pixmap(class_type)
+                    node.custom_widget.setPixmap(pixmap)
+                    node.is_under_attack = False
+                    node.is_active = False
+                    return True
+        return False
 
     def send_msg_btn_click(self):
         listen_thread = Thread(target=self.text_on_textBox)

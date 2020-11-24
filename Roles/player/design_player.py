@@ -57,6 +57,27 @@ class Ui_interface_player(object):
 "font-size: 12pt;\n"
 "font-family: Century Gothic, sans-serif;")
         self.textBrowser.setObjectName("textBrowser")
+        self.download_btn = QtWidgets.QPushButton(self.centralwidget)
+        self.download_btn.setGeometry(QtCore.QRect(350, 20, 271, 41))
+        self.download_btn.setStyleSheet("QPushButton\n"
+"{\n"
+"    background: #03a9f4;\n"
+"    color: #fff;\n"
+"    border-radius: 15px;\n"
+"    font-size: 12pt;\n"
+"    font-family: Century Gothic, sans-serif;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color:#64bee8;\n"
+"}\n"
+"\n"
+"QPushButton:pressed\n"
+"{\n"
+"    background-color:#03a9f4;\n"
+"}")
+        self.download_btn.setObjectName("download_btn")
         interface_player.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(interface_player)
         self.statusbar.setObjectName("statusbar")
@@ -69,3 +90,4 @@ class Ui_interface_player(object):
         _translate = QtCore.QCoreApplication.translate
         interface_player.setWindowTitle(_translate("interface_player", "Project"))
         self.send_msg_btn.setText(_translate("interface_player", "Отправить"))
+        self.download_btn.setText(_translate("interface_player", "Загрузить карту"))

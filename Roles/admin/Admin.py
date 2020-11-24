@@ -96,9 +96,10 @@ class Admin(QtWidgets.QMainWindow, Ui_interface_admin):
                 self.scene.clear()
                 for key_node in self.canvas.net.nodes:
                     node = self.canvas.net.nodes[key_node]
-                    pixmap = self.canvas.get_appropriate_pixmap(node)
+                    pixmap = self.canvas.get_appropriate_pixmap(node.__class__)
                     custom_label = Custom_label(pixmap=pixmap, canvas=self.canvas, model_item=node)
                     self.canvas.scene().addWidget(custom_label)
+                    self.canvas.scene().addWidget(custom_label.title)
 
                 for key_arc in self.canvas.net.arcs:
                     arc = self.canvas.net.arcs[key_arc]
