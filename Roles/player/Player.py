@@ -23,6 +23,7 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         self.setupUi(self)
         self.client = Client(username, token, points, group)
         self.setup_connect()
+        self.flag_correct = None
 
         # Настройка карты
         self.scene = QtWidgets.QGraphicsScene()
@@ -111,9 +112,8 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                 # attack представляет из себя одну из строк из списка ('атаковать комп1 ddos', 'атаковать комп1 пароль')
                 attack = data_decode.split(' предпринял атаку (')[1].split(')')[0]
 
-
             # Если защита корректна, то происходит обработка сообщения в зависимости от объекта и типа защиты
-            elif data_decode.split(self.client.separator)[0] == 'defend_correct':
+            elif data_decode.split(self.client.separator)[0] == 'defend_correct1':
                 data_decode = data_decode.split(self.client.separator)[1]
                 # defend представляет из себя одну из строк из списка ('защитить комп1 ddos', 'защитить комп1 пароль')
                 # Пример вызова функции защиты. Вместо 2 нужен id,
@@ -121,6 +121,11 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                 self.defend_node(2, Computer)
                 defend = data_decode.split(' предпринял защиту (')[1].split(')')[0]
 
+            elif data_decode.split(self.client.separator)[0] == 'defend_correct2':
+                question = data_decode.split(self.client.separator)[1]
+                self.flag_correct = data_decode.split(self.client.separator)[2]
+                self.textBrowser.append(question)
+                continue
             # Если сервер настроен на общение
             else:
                 data_decode = f"{str(datetime.now().time()).split('.')[0]}:  {data_decode}"
@@ -169,8 +174,21 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                    + self.client.username + self.client.separator + self.client.points
             self.client.first_message = False
         else:
-            data = self.client.username + self.client.separator + self.client.room + self.client.separator\
-                   + self.client.role + self.client.separator + self.plainTextEdit.toPlainText()
+            if self.flag_correct is not None:
+                user_answer = self.plainTextEdit.toPlainText()
+                if user_answer != self.flag_correct:
+                    data = self.client.username + self.client.separator + self.client.room + self.client.separator \
+                           + self.client.role + self.client.separator + 'Атакующий неправильно ответил на вопрос'
+                    self.flag_correct = None
+
+                else:
+                    data = self.client.username + self.client.separator + self.client.room + self.client.separator \
+                           + self.client.role + self.client.separator + 'Атакующий правильно ответил на вопрос'
+                    self.flag_correct = None
+            else:
+                data = self.client.username + self.client.separator + self.client.room + self.client.separator\
+                       + self.client.role + self.client.separator + self.plainTextEdit.toPlainText()
+
         self.client.socket.send(data.encode("utf-8"))
         self.plainTextEdit.clear()
 
