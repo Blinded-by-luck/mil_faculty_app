@@ -108,18 +108,20 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                 data_decode = data_decode.split(self.client.separator)[1]
                 # Пример вызова функции атаки. Вместо 2 нужен id,
                 # вместо Computer - Router или Commutator (в зависимости от команды)
-                self.attack_node(2, Computer)
-                # attack представляет из себя одну из строк из списка ('атаковать комп1 ddos', 'атаковать комп1 пароль')
+                # attack представляет из себя одну из строк из списка ('атаковать комп 1 ddos',
+                # 'атаковать комп 1 пароль')
                 attack = data_decode.split(' предпринял атаку (')[1].split(')')[0]
+                self.attack_node(attack.split(' ')[2], Computer)
 
             # Если защита корректна, то происходит обработка сообщения в зависимости от объекта и типа защиты
             elif data_decode.split(self.client.separator)[0] == 'defend_correct1':
                 data_decode = data_decode.split(self.client.separator)[1]
-                # defend представляет из себя одну из строк из списка ('защитить комп1 ddos', 'защитить комп1 пароль')
+                # defend представляет из себя одну из строк из списка ('защитить комп 1 ddos',
+                # 'защитить комп 1 пароль')
                 # Пример вызова функции защиты. Вместо 2 нужен id,
                 # вместо Computer - Router или Commutator (в зависимости от команды)
-                self.defend_node(2, Computer)
                 defend = data_decode.split(' предпринял защиту (')[1].split(')')[0]
+                self.defend_node(defend.split(' ')[2], Computer)
 
             elif data_decode.split(self.client.separator)[0] == 'defend_correct2':
                 question = data_decode.split(self.client.separator)[1]
