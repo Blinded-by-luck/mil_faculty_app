@@ -3,7 +3,10 @@ import socket
 from datetime import datetime
 from threading import Thread
 
+from Test_app.Dictionary import Questions
 import pandas as pd
+import numpy as np
+from random import shuffle
 
 class Client:
     def __init__(self, username, token, points, group):
@@ -33,7 +36,10 @@ class Server:
         )
         self.main_loop = asyncio.new_event_loop()
         self.dictionary = {'ip': [], 'token': [], 'ФИО': [], 'Баллы за тест': [], 'Баллы за практику': []}
+        self.dict = Questions()
+        self.defend_questions = self.random_questions()
         self.users = []
+        self.question_index = 0
         # separator используется для стабильности при передаче сообщений. Помимо того, что серверу и клиенту нужно
         # передавать сообщения пользователей, ему еще нужно передавать информацию о комнате, имени игрока и так далее.
         # Поэтому нужно использовать набор символов, который пользователь вряд ли когда-то введет
@@ -72,6 +78,19 @@ class Server:
                                         'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
                             'room_12': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_12.txt',
                                         'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]}}
+
+    def random_questions(self):
+        all_questions_keys = list(self.dict.quest.keys())
+        one_answer = []
+
+        # Поиск всех вопросов всех типов и добавление в соответствующие списки
+        for question_key in all_questions_keys:
+            if question_key[0] == 1:
+                one_answer.append(question_key)
+
+        shuffle(one_answer)
+
+        return one_answer
 
     # Отправка сообщений клиентам
     async def send_data(self, room, data=None, socket=None):
@@ -206,7 +225,12 @@ class Server:
                 self.info[room]['points'][0] += 1
                 # Отправка верной атаки всем в комнате
                 await self.send_data(room, message_to_send.encode('utf-8'))
-
+            elif message == 'атакующий неправильно ответил на вопрос':
+                message_to_send = 'incorrect' + self.separator + message
+                await self.send_data(room, message_to_send.encode('utf-8'))
+            elif message == 'атакующий правильно ответил на вопрос':
+                message_to_send = 'incorrect' + self.separator + message
+                await self.send_data(room, message_to_send.encode('utf-8'))
             # Если написал что-то, чего нет в командах для атакующего
             else:
                 message_to_send = 'incorrect' + self.separator + username + ', нельзя использовать данную атаку ' \
@@ -230,12 +254,27 @@ class Server:
             else:
                 # Если команда защитника защищает от типа нападения атакующего
                 if self.attack_defend[self.info[room]['last_action']] == message:
-                    message_to_send = 'defend_correct' + self.separator + username + ' предпринял защиту (' + message + ')'
+                    message_to_send = 'defend_correct1' + self.separator + username + ' предпринял защиту (' + message +\
+                                      ')' + '\nЗащитник воздействовал вопросом'
                     self.info[room]['last_action'] = ''
                     # Добавление одного очка за верно написанную команду по защите
                     self.info[room]['points'][1] += 1
                     # Отправка верной защиты всем в комнате
                     await self.send_data(room, message_to_send.encode('utf-8'))
+
+                    # Отправка вопроса нападающему
+                    question = self.defend_questions[self.question_index]
+                    answer1 = '\n1) ' + self.dict.quest[question][0][1]
+                    answer2 = '\n2) ' + self.dict.quest[question][1][1]
+                    answer3 = '\n3) ' + self.dict.quest[question][2][1] + '\n'
+                    correct = None
+                    for i in range(3):
+                        if self.dict.quest[question][i][2] == 1:
+                            correct = str(i + 1)
+                    message_to_send = 'defend_correct2' + self.separator + '\n' + question[1] + answer1 + answer2 +\
+                                      answer3 + self.separator + correct
+                    self.question_index += 1
+                    await self.send_data(room, message_to_send.encode('utf-8'), socket=self.info[room]['socket'][0])
 
                 # Если написана неверная команда или команда не соответствует типу нападения
                 else:
