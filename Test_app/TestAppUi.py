@@ -1412,7 +1412,7 @@ class Ui_Form(object):
         self.pushButton_13.setObjectName("pushButton_13")
         self.stackedWidget.addWidget(self.not_password)
         self.attacker = QtWidgets.QWidget()
-        self.attacker.setObjectName("attacker")
+        self.attacker.setObjectName("player")
         self.download_btn = QtWidgets.QPushButton(self.attacker)
         self.download_btn.setGeometry(QtCore.QRect(40, 330, 71, 51))
         self.download_btn.setStyleSheet("background-color: rgb(0, 170, 255);")

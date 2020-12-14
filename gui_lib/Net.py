@@ -28,7 +28,7 @@ class Net:
         self.computers.clear()
         self.routers.clear()
         self.commutators.clear()
-        counter = 0
+        counter = 1
         for key_node in self.nodes:
             node = self.nodes[key_node]
             node.id = counter
