@@ -120,7 +120,7 @@ class Canvas(QGraphicsView):
         self.interface_window = root
         self.net = None
         self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
-        path = '../Models/'
+        path = '..\\..\\Models\\'
         self.working_mode = canvas_working_mode
         self.computer_pixmap = QPixmap(path + 'Computer.png')
         self.router_pixmap = QPixmap(path + 'Router.png')
