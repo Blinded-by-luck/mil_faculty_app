@@ -38,6 +38,7 @@ class Custom_line(QGraphicsLineItem):
         self.setPen(Custom_line.dark_pen)
         self.model_item = model_item
         self.is_select = False
+        self.setZValue(-2)
         if self.model_item is not None:
             self.model_item.custom_line = self
 
@@ -156,7 +157,11 @@ class Canvas(QGraphicsView):
         return arc
 
     def draw_arc(self, arc):
-        custom_line = Custom_line(canvas=self, model_item=arc, x1=self.node_from.x, y1=self.node_from.y, x2=self.node_to.x, y2=self.node_to.y)
+        custom_line = Custom_line(canvas=self, model_item=arc,
+                                  x1=self.node_from.x + self.computer_pixmap.width() / 2,
+                                  y1=self.node_from.y + self.computer_pixmap.height() / 2,
+                                  x2=self.node_to.x + self.computer_pixmap.width() / 2,
+                                  y2=self.node_to.y + self.computer_pixmap.height() / 2)
         self.scene().addItem(custom_line)
 
     def make_selected(self, figure):

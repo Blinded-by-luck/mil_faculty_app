@@ -23,32 +23,44 @@
    <string notr="true">background: #fffdf5;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPlainTextEdit" name="plainTextEdit">
+   <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>220</x>
-      <y>570</y>
-      <width>491</width>
-      <height>71</height>
+      <x>40</x>
+      <y>10</y>
+      <width>761</width>
+      <height>691</height>
      </rect>
     </property>
-    <property name="styleSheet">
-     <string notr="true">background: white;
-font-size: 12pt;
-font-family: Century Gothic, sans-serif;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="send_msg_btn">
-    <property name="geometry">
-     <rect>
-      <x>330</x>
-      <y>660</y>
-      <width>271</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton
+    <layout class="QVBoxLayout" name="main_layout">
+     <property name="leftMargin">
+      <number>20</number>
+     </property>
+     <property name="topMargin">
+      <number>20</number>
+     </property>
+     <property name="rightMargin">
+      <number>20</number>
+     </property>
+     <property name="bottomMargin">
+      <number>20</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="download_btn">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>1231251</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton
 {
 	background: #03a9f4;
 	color: #fff;
@@ -66,53 +78,73 @@ QPushButton:pressed
 {
     background-color:#03a9f4;
 }</string>
-    </property>
-    <property name="text">
-     <string>Отправить</string>
-    </property>
-   </widget>
-   <widget class="QFrame" name="frame">
-    <property name="geometry">
-     <rect>
-      <x>90</x>
-      <y>79</y>
-      <width>751</width>
-      <height>321</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-   </widget>
-   <widget class="QTextBrowser" name="textBrowser">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>411</y>
-      <width>491</width>
-      <height>161</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background: #edfcff;
+       </property>
+       <property name="text">
+        <string>Загрузить карту</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontal_med_layout"/>
+     </item>
+     <item>
+      <widget class="QTextBrowser" name="textBrowser">
+       <property name="minimumSize">
+        <size>
+         <width>500</width>
+         <height>150</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>150</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background: #edfcff;
 font-size: 12pt;
 font-family: Century Gothic, sans-serif;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="download_btn">
-    <property name="geometry">
-     <rect>
-      <x>350</x>
-      <y>20</y>
-      <width>271</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPlainTextEdit" name="plainTextEdit">
+       <property name="minimumSize">
+        <size>
+         <width>500</width>
+         <height>70</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>70</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background: white;
+font-size: 12pt;
+font-family: Century Gothic, sans-serif;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="send_msg_btn">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton
 {
 	background: #03a9f4;
 	color: #fff;
@@ -130,10 +162,13 @@ QPushButton:pressed
 {
     background-color:#03a9f4;
 }</string>
-    </property>
-    <property name="text">
-     <string>Загрузить карту</string>
-    </property>
+       </property>
+       <property name="text">
+        <string>Отправить</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

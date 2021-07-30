@@ -27,11 +27,11 @@ class Admin(QtWidgets.QMainWindow, Ui_interface_admin):
 
         # Настройка карты
         self.scene = QtWidgets.QGraphicsScene()
-        self.scene.setSceneRect(0, 0, 600, 450)
+        self.scene.setSceneRect(0, 0, 800, 300)
         self.canvas = Canvas(self.centralwidget, self, CANVAS_WORKING_MODE.EDIT)
         self.canvas.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.canvas.net = Net({}, {}, {}, {}, {})
-        self.canvas.setGeometry(QtCore.QRect(90, 79, 751, 291))
+        self.canvas.setGeometry(QtCore.QRect(90, 79, 750, 250))
         self.canvas.setScene(self.scene)
         # Привязка событий нажатия
         self.add_computer_btn.clicked.connect(self.add_computer_btn_click)
@@ -41,6 +41,11 @@ class Admin(QtWidgets.QMainWindow, Ui_interface_admin):
         self.save_btn.clicked.connect(self.save_btn_click)
         self.download_btn.clicked.connect(self.download_btn_click)
         self.send_btn.clicked.connect(self.send_btn_click)
+        #
+        self.horizontal_med_layout.addWidget(self.canvas)
+        self.vertical_med_layout.addStretch()
+
+        self.centralwidget.setLayout(self.main_layout)
         # сообщение
         self.pushButton_2.clicked.connect(self.send_btn_click)
 
@@ -104,8 +109,10 @@ class Admin(QtWidgets.QMainWindow, Ui_interface_admin):
                 for key_arc in self.canvas.net.arcs:
                     arc = self.canvas.net.arcs[key_arc]
                     custom_line = Custom_line(canvas=self.canvas, model_item=arc,
-                                              x1=arc.node_from.x, y1=arc.node_from.y,
-                                              x2=arc.node_to.x, y2=arc.node_to.y)
+                                              x1=arc.node_from.x + self.canvas.computer_pixmap.width() / 2,
+                                              y1=arc.node_from.y + self.canvas.computer_pixmap.height() / 2,
+                                              x2=arc.node_to.x + self.canvas.computer_pixmap.width() / 2,
+                                              y2=arc.node_to.y + self.canvas.computer_pixmap.height() / 2)
                     self.canvas.scene().addItem(custom_line)
 
     # отправка карты и переход в не редактируемый режим
@@ -113,6 +120,8 @@ class Admin(QtWidgets.QMainWindow, Ui_interface_admin):
         self.hide_buttons()
         self.canvas.working_mode = CANVAS_WORKING_MODE.GAME
         net = pickle.dumps(self.canvas.net)
+        for user in self.server.users:
+            user.sendall(net)
         # FIXME передать net всем игрокам в комнате
 
 
@@ -133,6 +142,7 @@ class Admin(QtWidgets.QMainWindow, Ui_interface_admin):
     # Настройка сервера
     def setup_server(self):
         self.server.socket.bind(('127.0.0.1', 1234))
+        # self.server.socket.bind(('172.18.7.101', 1234))
         self.server.socket.listen(3)
         self.server.socket.setblocking(False)
         print('Сервер запущен')

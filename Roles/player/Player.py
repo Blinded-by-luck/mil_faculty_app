@@ -1,3 +1,5 @@
+import time
+
 from PyQt5 import QtCore, QtWidgets
 from sys import exit
 from threading import Thread
@@ -27,12 +29,16 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
 
         # Настройка карты
         self.scene = QtWidgets.QGraphicsScene()
-        self.scene.setSceneRect(0, 0, 600, 450)
+        self.scene.setSceneRect(0, 0, 800, 300)
         self.canvas = Canvas(self.centralwidget, self, CANVAS_WORKING_MODE.GAME)
         self.canvas.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.canvas.net = Net({}, {}, {}, {}, {})
-        self.canvas.setGeometry(QtCore.QRect(90, 79, 751, 291))
+        self.canvas.setGeometry(QtCore.QRect(90, 79, 750, 250))
         self.canvas.setScene(self.scene)
+        #
+        self.horizontal_med_layout.addWidget(self.canvas)
+
+        self.centralwidget.setLayout(self.main_layout)
         # Привязка событий нажатия
         self.send_msg_btn.clicked.connect(self.send_msg_btn_click)
         self.download_btn.clicked.connect(self.download_btn_click)
@@ -59,28 +65,26 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
 
     def download_btn_click(self):
         # отлов исключений
+        self.download_btn.hide()
         self.canvas.reset_temp_data()
-        options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getOpenFileName(self, "Открыть файл", "", "Special Files (*.mlbin)", options=options)
-        if file_name:
-            with open(file_name, 'rb') as file:
-                Node.reset_counter()
-                Arc.reset_counter()
-                self.canvas.net = pickle.load(file)
-                self.scene.clear()
-                for key_node in self.canvas.net.nodes:
-                    node = self.canvas.net.nodes[key_node]
-                    pixmap = self.canvas.get_appropriate_pixmap(node.__class__)
-                    custom_label = Custom_label(pixmap=pixmap, canvas=self.canvas, model_item=node)
-                    self.canvas.scene().addWidget(custom_label)
-                    self.canvas.scene().addWidget(custom_label.title)
+        net = self.client.socket.recv(1024)
+        self.canvas.net = pickle.loads(net)
+        self.scene.clear()
+        for key_node in self.canvas.net.nodes:
+            node = self.canvas.net.nodes[key_node]
+            pixmap = self.canvas.get_appropriate_pixmap(node.__class__)
+            custom_label = Custom_label(pixmap=pixmap, canvas=self.canvas, model_item=node)
+            self.canvas.scene().addWidget(custom_label)
+            self.canvas.scene().addWidget(custom_label.title)
 
-                for key_arc in self.canvas.net.arcs:
-                    arc = self.canvas.net.arcs[key_arc]
-                    custom_line = Custom_line(canvas=self.canvas, model_item=arc,
-                                              x1=arc.node_from.x, y1=arc.node_from.y,
-                                              x2=arc.node_to.x, y2=arc.node_to.y)
-                    self.canvas.scene().addItem(custom_line)
+        for key_arc in self.canvas.net.arcs:
+            arc = self.canvas.net.arcs[key_arc]
+            custom_line = Custom_line(canvas=self.canvas, model_item=arc,
+                                      x1=arc.node_from.x + self.canvas.computer_pixmap.width() / 2,
+                                      y1=arc.node_from.y + self.canvas.computer_pixmap.height() / 2,
+                                      x2=arc.node_to.x + self.canvas.computer_pixmap.width() / 2,
+                                      y2=arc.node_to.y + self.canvas.computer_pixmap.height() / 2)
+            self.canvas.scene().addItem(custom_line)
 
     # Считывание сообщений с сервера
     # FIXME переделать структуру сообщений
@@ -111,7 +115,8 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                 # attack представляет из себя одну из строк из списка ('атаковать комп 1 ddos',
                 # 'атаковать комп 1 пароль')
                 attack = data_decode.split(' предпринял атаку (')[1].split(')')[0]
-                self.attack_node(int(attack.split(' ')[2]), Computer)
+                thread = Thread(target=self.attack_node, args=(int(attack.split(' ')[2]), Computer), daemon=True)
+                thread.start()
 
             # Если защита корректна, то происходит обработка сообщения в зависимости от объекта и типа защиты
             elif data_decode.split(self.client.separator)[0] == 'defend_correct1':
@@ -143,12 +148,16 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
     def attack_node(self, id, class_type):
         if id in self.canvas.net.nodes:
             node = self.canvas.net.nodes[id]
+            pixmap = self.canvas.get_appropriate_pixmap(class_type)
+            fired_pixmap = self.canvas.get_appropriate_fired_pixmap(class_type)
             if node.is_active:
-                if not node.is_under_attack:
-                    pixmap = self.canvas.get_appropriate_fired_pixmap(class_type)
+                node.is_under_attack = True
+                while node.is_under_attack:
+                    node.custom_widget.setPixmap(fired_pixmap)
+                    time.sleep(1)
                     node.custom_widget.setPixmap(pixmap)
-                    node.is_under_attack = True
-                    return True
+                    time.sleep(1)
+                return True
         return False
 
     # Помечает соответствующую вершину черным
@@ -196,9 +205,12 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
 
     def setup_connect(self):
         try:
-            self.client.socket.connect(
-                ("127.0.0.1", 1234)
-            )
+             self.client.socket.connect(
+                 ("127.0.0.1", 1234)
+             )
+            # self.client.socket.connect(
+            #    ("172.18.7.101", 1234)
+            #)
         except:
             alert = QMessageBox()
             alert.setText('Ошибка подключения к серверу!')

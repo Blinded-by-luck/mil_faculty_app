@@ -299,13 +299,25 @@ class TestApp(QtWidgets.QMainWindow):
 
     def pb2_clicked(self, question_type, key, number):
         if question_type == 'one':
-            self.correct_points += self.check_answer_one(key, self.user_answers[number])
+            if self.user_answers[number] is None:
+                QtWidgets.QMessageBox.about(self, 'Ошибка', 'Выберите вариант ответа')
+            else:
+                self.correct_points += self.check_answer_one(key, self.user_answers[number])
+                self.ui.stackedWidget.setCurrentIndex(number + 2)
         elif question_type == 'multiple':
-            self.correct_points += self.check_answer_multiple(key, self.user_answers[number])
+            if not self.user_answers[number]:
+                QtWidgets.QMessageBox.about(self, 'Ошибка', 'Выберите вариант ответа')
+            else:
+                self.correct_points += self.check_answer_multiple(key, self.user_answers[number])
+                self.ui.stackedWidget.setCurrentIndex(number + 2)
         elif question_type == 'string':
-            self.correct_points += self.check_answer_string(key, number)
 
-        self.ui.stackedWidget.setCurrentIndex(number + 2)
+            self.correct_points += self.check_answer_string(key, number)
+            if self.user_answers[number] is None:
+                QtWidgets.QMessageBox.about(self, 'Ошибка', 'Введите ответ')
+            else:
+
+                self.ui.stackedWidget.setCurrentIndex(number + 2)
 
     def pb3_clicked(self, question_type, key, number):
         if question_type == 'multiple':
