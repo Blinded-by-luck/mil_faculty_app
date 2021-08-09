@@ -14,60 +14,200 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_interface_admin(object):
     def setupUi(self, interface_admin):
         interface_admin.setObjectName("interface_admin")
-        interface_admin.resize(800, 600)
+        interface_admin.resize(1020, 745)
         interface_admin.setMinimumSize(QtCore.QSize(800, 600))
-        interface_admin.setStyleSheet("background-color: rgb(170, 170, 255);")
+        interface_admin.setStyleSheet("background: #fffdf5;")
+
         self.centralwidget = QtWidgets.QWidget(interface_admin)
         self.centralwidget.setObjectName("centralwidget")
-        self.add_computer_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.add_computer_btn.setGeometry(QtCore.QRect(0, 80, 41, 31))
-        self.add_computer_btn.setStyleSheet("background-color: rgb(0, 170, 255);")
+        self.stackedWidget = QtWidgets.QStackedWidget(self.centralwidget)
+        self.stackedWidget.setGeometry(QtCore.QRect(0, 0, 1020, 723))
+        self.stackedWidget.setObjectName("stackedWidget")
+
+        self.room = QtWidgets.QWidget()
+        self.room.setObjectName("room")
+
+        self.verticalLayoutWidget_3 = QtWidgets.QWidget(self.room)
+        self.verticalLayoutWidget_3.setGeometry(QtCore.QRect(-40, 40, 1001, 681))
+        self.verticalLayoutWidget_3.setObjectName("verticalLayoutWidget_3")
+
+        self.main_layout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_3)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setObjectName("main_layout")
+        self.horizontal_up_layout = QtWidgets.QHBoxLayout()
+        self.horizontal_up_layout.setContentsMargins(20, 20, 20, 10)
+        self.horizontal_up_layout.setObjectName("horizontal_up_layout")
+
+        self.save_btn = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.save_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.save_btn.setStyleSheet("QPushButton\n"
+"{\n"
+"    background: #03a9f4;\n"
+"    color: #fff;\n"
+"    border-radius: 15px;\n"
+"    font-size: 12pt;\n"
+"    font-family: Century Gothic, sans-serif;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color:#64bee8;\n"
+"}\n"
+"\n"
+"QPushButton:pressed\n"
+"{\n"
+"    background-color:#03a9f4;\n"
+"}")
+        self.save_btn.setObjectName("save_btn")
+        self.horizontal_up_layout.addWidget(self.save_btn)
+        self.download_btn = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.download_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.download_btn.setStyleSheet("QPushButton\n"
+"{\n"
+"    background: #03a9f4;\n"
+"    color: #fff;\n"
+"    border-radius: 15px;\n"
+"    font-size: 12pt;\n"
+"    font-family: Century Gothic, sans-serif;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color:#64bee8;\n"
+"}\n"
+"\n"
+"QPushButton:pressed\n"
+"{\n"
+"    background-color:#03a9f4;\n"
+"}")
+        self.download_btn.setObjectName("download_btn")
+        self.horizontal_up_layout.addWidget(self.download_btn)
+        self.send_btn = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.send_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.send_btn.setStyleSheet("QPushButton\n"
+"{\n"
+"    background: #03a9f4;\n"
+"    color: #fff;\n"
+"    border-radius: 15px;\n"
+"    font-size: 12pt;\n"
+"    font-family: Century Gothic, sans-serif;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color:#64bee8;\n"
+"}\n"
+"\n"
+"QPushButton:pressed\n"
+"{\n"
+"    background-color:#03a9f4;\n"
+"}")
+        self.send_btn.setObjectName("send_btn")
+        self.horizontal_up_layout.addWidget(self.send_btn)
+
+        self.main_layout.addLayout(self.horizontal_up_layout)
+        self.horizontal_med_layout = QtWidgets.QHBoxLayout()
+        self.horizontal_med_layout.setContentsMargins(-1, -1, 20, -1)
+        self.horizontal_med_layout.setObjectName("horizontal_med_layout")
+
+        self.vertical_med_layout = QtWidgets.QVBoxLayout()
+        self.vertical_med_layout.setContentsMargins(-1, -1, 10, -1)
+        self.vertical_med_layout.setObjectName("vertical_med_layout")
+        # -------------------------------------------------------
+        self.add_computer_btn = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.add_computer_btn.setMinimumSize(QtCore.QSize(40, 50))
+        self.add_computer_btn.setMaximumSize(QtCore.QSize(40, 50))
+        self.add_computer_btn.setStyleSheet("")
         self.add_computer_btn.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("../../Models/Computer.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.add_computer_btn.setIcon(icon)
         self.add_computer_btn.setIconSize(QtCore.QSize(32, 32))
         self.add_computer_btn.setObjectName("add_computer_btn")
-        self.send_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.send_btn.setGeometry(QtCore.QRect(0, 370, 71, 51))
-        self.send_btn.setStyleSheet("background-color: rgb(0, 170, 255);")
-        self.send_btn.setObjectName("send_btn")
-        self.download_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.download_btn.setGeometry(QtCore.QRect(0, 430, 71, 51))
-        self.download_btn.setStyleSheet("background-color: rgb(0, 170, 255);")
-        self.download_btn.setObjectName("download_btn")
-        self.add_router_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.add_router_btn.setGeometry(QtCore.QRect(0, 110, 41, 31))
-        self.add_router_btn.setStyleSheet("background-color: rgb(0, 170, 255);")
+        self.vertical_med_layout.addWidget(self.add_computer_btn)
+        self.add_router_btn = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.add_router_btn.setMinimumSize(QtCore.QSize(40, 50))
+        self.add_router_btn.setMaximumSize(QtCore.QSize(40, 50))
+        self.add_router_btn.setStyleSheet("")
         self.add_router_btn.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap("../../Models/Router.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.add_router_btn.setIcon(icon1)
         self.add_router_btn.setIconSize(QtCore.QSize(32, 32))
         self.add_router_btn.setObjectName("add_router_btn")
-        self.add_commutator_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.add_commutator_btn.setGeometry(QtCore.QRect(0, 140, 41, 31))
-        self.add_commutator_btn.setStyleSheet("background-color: rgb(0, 170, 255);")
+        self.vertical_med_layout.addWidget(self.add_router_btn)
+        self.add_commutator_btn = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.add_commutator_btn.setMinimumSize(QtCore.QSize(40, 50))
+        self.add_commutator_btn.setMaximumSize(QtCore.QSize(40, 50))
+        self.add_commutator_btn.setStyleSheet("")
         self.add_commutator_btn.setText("")
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap("../../Models/Commutator.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.add_commutator_btn.setIcon(icon2)
         self.add_commutator_btn.setIconSize(QtCore.QSize(32, 32))
         self.add_commutator_btn.setObjectName("add_commutator_btn")
-        self.add_arc_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.add_arc_btn.setGeometry(QtCore.QRect(0, 170, 41, 31))
-        self.add_arc_btn.setStyleSheet("background-color: rgb(0, 170, 255);")
+        self.vertical_med_layout.addWidget(self.add_commutator_btn)
+        self.add_arc_btn = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.add_arc_btn.setMinimumSize(QtCore.QSize(40, 50))
+        self.add_arc_btn.setMaximumSize(QtCore.QSize(40, 50))
+        self.add_arc_btn.setStyleSheet("")
         self.add_arc_btn.setText("")
         icon3 = QtGui.QIcon()
         icon3.addPixmap(QtGui.QPixmap("../../Models/Arc.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.add_arc_btn.setIcon(icon3)
         self.add_arc_btn.setIconSize(QtCore.QSize(32, 32))
         self.add_arc_btn.setObjectName("add_arc_btn")
+        self.vertical_med_layout.addWidget(self.add_arc_btn)
+        self.horizontal_med_layout.addLayout(self.vertical_med_layout)
+        self.main_layout.addLayout(self.horizontal_med_layout)
+        self.vertical_down_layout = QtWidgets.QVBoxLayout()
+        self.vertical_down_layout.setContentsMargins(20, -1, 20, -1)
+        self.vertical_down_layout.setObjectName("vertical_down_layout")
+        self.textBrowser = QtWidgets.QTextBrowser(self.verticalLayoutWidget_3)
+        self.textBrowser.setMinimumSize(QtCore.QSize(500, 150))
+        self.textBrowser.setMaximumSize(QtCore.QSize(16777215, 150))
+        self.textBrowser.setStyleSheet("background: #edfcff;\n"
+"font-size: 12pt;\n"
+"font-family: Century Gothic, sans-serif;")
+        self.textBrowser.setObjectName("textBrowser")
+        self.vertical_down_layout.addWidget(self.textBrowser)
+        self.plainTextEdit = QtWidgets.QPlainTextEdit(self.verticalLayoutWidget_3)
+        self.plainTextEdit.setMinimumSize(QtCore.QSize(500, 70))
+        self.plainTextEdit.setMaximumSize(QtCore.QSize(16777215, 70))
+        self.plainTextEdit.setStyleSheet("background: white;\n"
+"font-size: 12pt;\n"
+"font-family: Century Gothic, sans-serif;")
+        self.plainTextEdit.setObjectName("plainTextEdit")
+        self.vertical_down_layout.addWidget(self.plainTextEdit)
+        self.pushButton_2 = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.pushButton_2.setMinimumSize(QtCore.QSize(200, 40))
+        self.pushButton_2.setMaximumSize(QtCore.QSize(16777215, 40))
+        self.pushButton_2.setStyleSheet("QPushButton\n"
+"{\n"
+"    background: #03a9f4;\n"
+"    color: #fff;\n"
+"    border-radius: 15px;\n"
+"    font-size: 12pt;\n"
+"    font-family: Century Gothic, sans-serif;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color:#64bee8;\n"
+"}\n"
+"\n"
+"QPushButton:pressed\n"
+"{\n"
+"    background-color:#03a9f4;\n"
+"}")
+        self.pushButton_2.setObjectName("pushButton_2")
+        self.vertical_down_layout.addWidget(self.pushButton_2)
+        self.main_layout.addLayout(self.vertical_down_layout)
+        self.stackedWidget.addWidget(self.room)
+        self.page_2 = QtWidgets.QWidget()
+        self.page_2.setObjectName("page_2")
+        self.stackedWidget.addWidget(self.page_2)
         interface_admin.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(interface_admin)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
-        self.menubar.setObjectName("menubar")
-        interface_admin.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(interface_admin)
         self.statusbar.setObjectName("statusbar")
         interface_admin.setStatusBar(self.statusbar)
@@ -78,15 +218,7 @@ class Ui_interface_admin(object):
     def retranslateUi(self, interface_admin):
         _translate = QtCore.QCoreApplication.translate
         interface_admin.setWindowTitle(_translate("interface_admin", "Project"))
-        self.send_btn.setText(_translate("interface_admin", "Отправить"))
-        self.download_btn.setText(_translate("interface_admin", "Загрузить"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    interface_admin = QtWidgets.QMainWindow()
-    ui = Ui_interface_admin()
-    ui.setupUi(interface_admin)
-    interface_admin.show()
-    sys.exit(app.exec_())
+        self.save_btn.setText(_translate("interface_admin", "Сохранить карту"))
+        self.download_btn.setText(_translate("interface_admin", "Загрузить карту"))
+        self.send_btn.setText(_translate("interface_admin", "Отправить карту"))
+        self.pushButton_2.setText(_translate("interface_admin", "Отправить"))

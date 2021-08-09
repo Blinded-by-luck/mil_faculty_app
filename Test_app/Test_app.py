@@ -34,9 +34,6 @@ class TestApp(QtWidgets.QMainWindow):
         self.radio_buttons()
         self.checkboxes()
 
-        self.init_attacker_widget()
-
-
     def correct_word(self):
         if self.correct_points in [2, 3, 4]:
             return ' балла'
@@ -302,58 +299,37 @@ class TestApp(QtWidgets.QMainWindow):
 
     def pb2_clicked(self, question_type, key, number):
         if question_type == 'one':
-            self.correct_points += self.check_answer_one(key, self.user_answers[number])
+            if self.user_answers[number] is None:
+                QtWidgets.QMessageBox.about(self, 'Ошибка', 'Выберите вариант ответа')
+            else:
+                self.correct_points += self.check_answer_one(key, self.user_answers[number])
+                self.ui.stackedWidget.setCurrentIndex(number + 2)
         elif question_type == 'multiple':
-            self.correct_points += self.check_answer_multiple(key, self.user_answers[number])
+            if not self.user_answers[number]:
+                QtWidgets.QMessageBox.about(self, 'Ошибка', 'Выберите вариант ответа')
+            else:
+                self.correct_points += self.check_answer_multiple(key, self.user_answers[number])
+                self.ui.stackedWidget.setCurrentIndex(number + 2)
         elif question_type == 'string':
-            self.correct_points += self.check_answer_string(key, number)
 
-        self.ui.stackedWidget.setCurrentIndex(number + 2)
+            self.correct_points += self.check_answer_string(key, number)
+            if self.user_answers[number] is None:
+                QtWidgets.QMessageBox.about(self, 'Ошибка', 'Введите ответ')
+            else:
+
+                self.ui.stackedWidget.setCurrentIndex(number + 2)
 
     def pb3_clicked(self, question_type, key, number):
         if question_type == 'multiple':
             self.correct_points += self.check_answer_multiple(key, self.user_answers[number])
 
-        if self.correct_points <= 8:
+        if self.correct_points < 7:
             self.ui.stackedWidget.setCurrentIndex(11)
             self.ui.label_12.setText(str(self.correct_points) + self.correct_word())
             self.ui.label_2.setText(self.password)
         else:
             self.ui.stackedWidget.setCurrentIndex(12)
             self.ui.label_65.setText(str(self.correct_points) + self.correct_word())
-
-    def init_attacker_widget(self):
-        # Продолжение конструктора Interface_attacker
-        self.ui.attacker.scene = QtWidgets.QGraphicsScene()
-        # Подумать насчет координат
-        self.ui.attacker.scene.setSceneRect(0, 0, 600, 450)
-        self.ui.attacker.canvas = Canvas(self.ui.attacker, CANVAS_WORKING_MODE.GAME)
-        # ???
-        self.ui.attacker.canvas.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.ui.attacker.canvas.net = Net({}, {}, {}, {}, {})
-
-        # Сделать не через абсолютные координаты
-        self.ui.attacker.canvas.setGeometry(QtCore.QRect(180, 70, 600, 450))
-        self.ui.attacker.canvas.setScene(self.ui.attacker.scene)
-
-        self.ui.download_btn.clicked.connect(self.download_btn_click)
-
-    def download_btn_click(self):
-        # отлов исключений
-        self.ui.attacker.canvas.reset_temp_data()
-        # options = QFileDialog.Options()
-        # file_name, _ = QFileDialog.getOpenFileName(self, "Открыть файл", "", "Special Files (*.mlbin)", options=options)
-        # if file_name:
-        with open('data.mlbin', 'rb') as file:
-            Node.reset_counter()
-            Arc.reset_counter()
-            self.ui.attacker.canvas.net = pickle.load(file)
-            self.ui.attacker.scene.clear()
-            for key_node in self.ui.attacker.canvas.net.nodes:
-                node = self.ui.attacker.canvas.canvas.net.nodes[key_node]
-                pixmap = self.ui.attacker.canvas.get_appropriate_pixmap(node)
-                custom_label = Custom_label(pixmap=pixmap, canvas=self.ui.attacker.canvas, model_item=node)
-                self.ui.attacker.canvas.scene().addWidget(custom_label)
 
     def check_answer_one(self, key, user_answer):
         if user_answer is not None:
@@ -411,6 +387,9 @@ class TestApp(QtWidgets.QMainWindow):
 
     def get_points(self):
         return self.correct_points
+
+    def get_group(self):
+        return self.group
 
 
 if __name__ == '__main__':

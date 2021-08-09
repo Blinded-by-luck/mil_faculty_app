@@ -1,9 +1,10 @@
-
 """
 Класс для представления ребра
+Включает в себя бекенд и фронтенд.
 """
 class Arc:
     Counter = 1
+
     @classmethod
     def reset_counter(cls):
         cls.Counter = 1
@@ -13,14 +14,13 @@ class Arc:
         self.node_from = node_from
         self.node_to = node_to
         self.id = -Arc.Counter
+        """Фронтенд ребра"""
         self.custom_line = None
         if mode == 0:
             self.node_from.outgoing_arcs.append(self)
             self.node_to.ingoing_arcs.append(self)
         print("Arc init: Arc.Counter =", Arc.Counter)
         print("Arc id=", self.id)
-        #print("node_from =", self.node_from.id)
-        #print("node_to =", self.node_to.id)
         Arc.Counter += 1
 
     """Удаляет ребро со сцены и из модели"""
