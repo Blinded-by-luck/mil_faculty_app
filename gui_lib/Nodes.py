@@ -2,6 +2,7 @@ from PyQt5.QtGui import QPixmap
 
 """
 Абстрактный класс вершина для представления узлов в сети
+Включает в себя бекенд и фронтенд.
 """
 class Node:
     Counter = 1
@@ -9,7 +10,8 @@ class Node:
     @classmethod
     def reset_counter(cls):
         cls.Counter = 1
-    """Конструктор для создание вершины. Не должен вызываться обособленно"""
+
+    # Конструктор для создание вершины. Не должен вызываться обособленно
     def __init__(self, x=0, y=0, id=None, ingoing_arcs=None, outgoing_arcs=None):
         if ingoing_arcs is None:
             ingoing_arcs = []
@@ -25,30 +27,33 @@ class Node:
         self.y = y
         self.ingoing_arcs = ingoing_arcs
         self.outgoing_arcs = outgoing_arcs
+        # Фронтенд вершины
         self.custom_widget = None
 
         self.is_under_attack = False
         # Вершина прекращает быть активной после ее защиты (или не защиты),
         # т.е. повторные атаки и защиты запрещены
         self.is_active = True
-    """Удаляет вершину со сцены и из модели"""
+
+    # Удаляет вершину со сцены и из модели
     def delete(self):
         self.delete_from_scene()
         self.delete_from_model()
 
-    """Удаляет вершину со сцены"""
+    # Удаляет вершину со сцены
     def delete_from_scene(self):
         pass
 
-    """Удаляет вершину из модели"""
+    # Удаляет вершину из модели
     def delete_from_model(self):
         pass
+
 
 """
 Класс для представления компьютера
 """
 class Computer(Node):
-    """Конструтор для создания компьютера, не должен вызываться обособленно"""
+    # Конструтор для создания компьютера, не должен вызываться обособленно
     def __init__(self, x=0, y=0, id=None, ingoing_arcs=None, outgoing_arcs=None):
         super().__init__(x=x, y=y, id=id, ingoing_arcs=ingoing_arcs, outgoing_arcs=outgoing_arcs)
         print("Computer id=", self.id)

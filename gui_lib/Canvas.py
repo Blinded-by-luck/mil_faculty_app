@@ -9,10 +9,12 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsPixmapItem, QLabel, QGraphic
 from enum import Enum
 
 from gui_lib.Arc import Arc
+from gui_lib.Net import Net
 from gui_lib.Nodes import Computer
 from gui_lib.Nodes import Router
 from gui_lib.Nodes import Commutator
 from gui_lib.Nodes import Node
+
 
 # По мере разработки сюда надо добавлять состояния
 class MOUSE_BTN_MODE(Enum):
@@ -22,11 +24,13 @@ class MOUSE_BTN_MODE(Enum):
     ADD_COMMUTATOR = 3
     ADD_ARC = 4
 
+
 class CANVAS_WORKING_MODE(Enum):
     EDIT = 0
     GAME = 1
 
 
+"""Класс для фронтенд представления ребер"""
 class Custom_line(QGraphicsLineItem):
     dark_pen = QPen(QtCore.Qt.black, 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
     orange = QColor(0xff, 0xa5, 0x00)
@@ -36,10 +40,13 @@ class Custom_line(QGraphicsLineItem):
         super().__init__(x1, y1, x2, y2)
         self.canvas = canvas
         self.setPen(Custom_line.dark_pen)
+        # Обратная ссылка на бекенд ребра
         self.model_item = model_item
         self.is_select = False
+        # Расположение ребер позади узлов
         self.setZValue(-2)
         if self.model_item is not None:
+            # Ссылка на себя для бекенда
             self.model_item.custom_line = self
 
     def mousePressEvent(self, event):
@@ -59,17 +66,22 @@ class Custom_line(QGraphicsLineItem):
                         print("Custom_line unselected")
                     event.accept()
 
+
+"""Класс для фронтенд представления узлов"""
 class Custom_label(QLabel):
 
     def __init__(self, pixmap=None, canvas=None, model_item=None):
         super().__init__()
         self.setPixmap(pixmap)
         self.canvas = canvas
+        # Обратная ссылка на бекенд узла
         self.model_item = model_item
         self.is_select = False
         self.setStyleSheet("background:transparent")
         if self.model_item is not None:
+            # Ссылка на себя для бекенда
             self.model_item.custom_widget = self
+            # Отрисовка номера
             if pixmap is not None:
                 self.setGeometry(self.model_item.x, self.model_item.y, pixmap.width(), pixmap.height())
                 self.title = QLabel()
@@ -104,6 +116,7 @@ class Custom_label(QLabel):
                         self.canvas.unselect_and_remove_figure(self)
                         print("Custom_label unselected")
                     event.accept()
+        # Логика во время игры
         # if self.canvas.working_mode == CANVAS_WORKING_MODE.GAME:
         #     super().mousePressEvent(event)
         #     if event.button() == Qt.LeftButton:
@@ -113,16 +126,18 @@ class Custom_label(QLabel):
         #         event.accept()
 
 
-
+"""Фронтенд сети"""
 class Canvas(QGraphicsView):
 
     def __init__(self, parent=None, root=None, canvas_working_mode=0):
         QGraphicsView.__init__(self, parent=parent)
+        # Обратная ссылка на главное окно
         self.interface_window = root
-        self.net = None
+        # TODO Массив сетей
+        self.net = Net({}, {}, {}, {}, {})
         self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
-        path = '..\\..\\Models\\'
         self.working_mode = canvas_working_mode
+        path = '..' + os.sep + '..' + os.sep + 'Models' + os.sep
         self.computer_pixmap = QPixmap(path + 'Computer.png')
         self.router_pixmap = QPixmap(path + 'Router.png')
         self.commutator_pixmap = QPixmap(path + 'Commutator.png')
@@ -132,6 +147,7 @@ class Canvas(QGraphicsView):
         self.fired_computer_pixmap = QPixmap(path + 'Fired_computer.png')
         self.fired_router_pixmap = QPixmap(path + 'Fired_router.png')
         self.fired_commutator_pixmap = QPixmap(path + 'Fired_commutator.png')
+        self.arc_pixmap = QPixmap(path + 'Arc.png')
         # Бросать ошибку, если нет файлов
         if self.computer_pixmap.isNull():
             print('computer_pixmap is null')
@@ -141,7 +157,7 @@ class Canvas(QGraphicsView):
         self.node_to = None
 
     def keyPressEvent(self, event):
-        #super().keyPressEvent(event)
+        # super().keyPressEvent(event)
         if event.key() == Qt.Key_Delete:
             for key_figure in self.selected_figures:
                 self.selected_figures[key_figure].model_item.delete()
@@ -166,30 +182,29 @@ class Canvas(QGraphicsView):
 
     def make_selected(self, figure):
         figure.is_select = True
+        # Если узел
         if isinstance(figure, Custom_label):
             if isinstance(figure.model_item, Computer):
                 if self.working_mode == CANVAS_WORKING_MODE.EDIT:
                     figure.setPixmap(self.selected_computer_pixmap)
                 else:
                     figure.setPixmap(self.fired_computer_pixmap)
-            else:
-                if isinstance(figure.model_item, Router):
-                    if self.working_mode == CANVAS_WORKING_MODE.EDIT:
-                        figure.setPixmap(self.selected_router_pixmap)
-                    else:
-                        figure.setPixmap(self.fired_router_pixmap)
+            elif isinstance(figure.model_item, Router):
+                if self.working_mode == CANVAS_WORKING_MODE.EDIT:
+                    figure.setPixmap(self.selected_router_pixmap)
                 else:
-                    if isinstance(figure.model_item, Commutator):
-                        if self.working_mode == CANVAS_WORKING_MODE.EDIT:
-                            figure.setPixmap(self.selected_commutator_pixmap)
-                        else:
-                            figure.setPixmap(self.fired_commutator_pixmap)
-                    else:
-                        print("Error in nested if make_selected")
+                    figure.setPixmap(self.fired_router_pixmap)
+            elif isinstance(figure.model_item, Commutator):
+                if self.working_mode == CANVAS_WORKING_MODE.EDIT:
+                    figure.setPixmap(self.selected_commutator_pixmap)
+                else:
+                    figure.setPixmap(self.fired_commutator_pixmap)
+            else:
+                print("Error in nested if make_selected")
+        # Если ребро
         else:
             figure.setPen(Custom_line.orange_pen)
         self.selected_figures[figure.model_item.id] = figure
-
 
     def unselect_figure(self, figure):
         figure.is_select = False
@@ -216,23 +231,19 @@ class Canvas(QGraphicsView):
     def get_appropriate_pixmap(self, class_node):
         if class_node is Computer:
             return self.computer_pixmap
-        else:
-            if class_node is Router:
-                return self.router_pixmap
-            else:
-                if class_node is Commutator:
-                    return self.commutator_pixmap
+        elif class_node is Router:
+            return self.router_pixmap
+        elif class_node is Commutator:
+            return self.commutator_pixmap
         return ValueError("Unrecognized class")
 
     def get_appropriate_fired_pixmap(self, class_node):
         if class_node is Computer:
             return self.fired_computer_pixmap
-        else:
-            if class_node is Router:
-                return self.fired_router_pixmap
-            else:
-                if class_node is Commutator:
-                    return self.fired_commutator_pixmap
+        elif class_node is Router:
+            return self.fired_router_pixmap
+        elif class_node is Commutator:
+            return self.fired_commutator_pixmap
         return ValueError("Unrecognized class")
 
     def mousePressEvent(self, event):
@@ -242,8 +253,6 @@ class Canvas(QGraphicsView):
                 if (self.mouse_btn_mode == MOUSE_BTN_MODE.CHOOSE) & (not event.isAccepted()):
                     print("Event from canvas")
                     return
-                # print('count nodes before =', len(self.interface_admin.net.nodes))
-                # print('Node.Counter before =', Node.Counter)
                 point = self.mapToScene(event.pos())
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_COMPUTER:
                     node = Computer(point.x() - self.computer_pixmap.width() / 2,
@@ -256,7 +265,7 @@ class Canvas(QGraphicsView):
 
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_ROUTER:
                     node = Router(point.x() - self.router_pixmap.width() / 2,
-                                    point.y() - self.router_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
+                                  point.y() - self.router_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.router_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
@@ -265,21 +274,22 @@ class Canvas(QGraphicsView):
 
                 if self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_COMMUTATOR:
                     node = Commutator(point.x() - self.commutator_pixmap.width() / 2,
-                                    point.y() - self.commutator_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
+                                      point.y() - self.commutator_pixmap.height() / 2, ingoing_arcs=[],
+                                      outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.commutator_pixmap, canvas=self, model_item=node)
                     self.net.add_node(node)
                     self.scene().addWidget(custom_label)
                     self.scene().addWidget(custom_label.title)
                     return
             if event.button() == Qt.RightButton:
-                # если что расписать подробнее
+                # Отмена выбора фигур
                 if (self.mouse_btn_mode == MOUSE_BTN_MODE.CHOOSE) & (not event.isAccepted()):
                     self.reset_temp_data()
                     return
                 if (self.mouse_btn_mode == MOUSE_BTN_MODE.ADD_ARC) & (self.node_from is not None):
                     self.reset_temp_data()
                     return
-
+                # Отмена выбора фигур и переход в режим выбора
                 if self.mouse_btn_mode != MOUSE_BTN_MODE.CHOOSE:
                     self.interface_window.enable_buttons()
                     self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
