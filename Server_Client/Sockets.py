@@ -1,4 +1,5 @@
 import asyncio
+import pickle
 import socket
 from datetime import datetime
 from threading import Thread
@@ -84,6 +85,108 @@ class Server:
                                         'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
                             'room_12': {'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_12.txt',
                                         'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]}}
+        self.functions = [self.server_code0, self.server_code1, self.server_code2]
+
+    # code0 - первое сообщение
+    def server_code0(self, args, ip, listened_socket):
+        # args = [token, username, points]
+        print('Enter')
+        token = args[0]
+        username = args[1]
+        score = args[2]
+        # Создаем эксель файл с полученными данными
+        self.create_dict(ip, token, username, score)
+        # Выбираем комнату и роль для игрока и далее отправляем эти данные пользователю
+        room = self.available_rooms[0]
+        self.info['room_' + str(room)]['ip'].append(ip)
+        self.info['room_' + str(room)]['socket'].append(listened_socket)
+        print(listened_socket, self.info['room_' + str(room)])
+        role = self.info['room_' + str(room)]['role'][0]
+
+        self.available_rooms.remove(room)
+        self.info['room_' + str(room)]['role'].remove(role)
+
+        data = {'key': 0, 'info': [username, room, role]}
+        return data, 'room_' + str(room)
+
+    # code1 - сообщение от атакующего
+    def server_code1(self, args, listened_socket):
+        # args = [username, room, role, result]
+        username = args[0]
+        room = args[1]
+        result = args[2]
+        # Записываем все сообщения в переменную text, из которой позже будет сформирован txt файл
+        self.info[room]['text'] += str(datetime.now().time()).split('.')[0] + ':' + '(' + username + ')' + result + '\n'
+        if username not in self.info[room]['username']:
+            self.info[room]['username'].append(username)
+
+        print('Message from attacker: ', result)
+        # Если команда верная
+        if result in self.attack_defend.keys():
+            # Записываем в self.server.info[room]['last_action'] команду, чтобы защищающийся ввел команду, которая
+            # защищает конкретно от этого вида атаки
+            self.info[room]['last_action'] = result
+            data = {'key': 1, 'info': [username, result]}
+            socket_to_send = None
+            # Добавление одного очка за верно написанную команду по атаке
+            self.info[room]['points'][0] += 1
+        elif result in [0, 1]:
+            data = {'key': 2, 'info': [result]}
+            socket_to_send = None
+        # Если написал что-то, чего нет в командах для атакующего
+        else:
+            data = {'key': 3, 'info': [username]}
+            socket_to_send = listened_socket
+
+        # Обновление значений в эксель таблице
+        self.create_dict(username=username, score_practice=self.info[room]['points'][0])
+        return data, socket_to_send, room
+
+    # code2 - сообщение от защитника
+    def server_code2(self, args, listened_socket):
+        # args = [username, room, role, result]
+        username = args[0]
+        room = args[1]
+        result = args[2]
+        print('Message from defender:', result)
+        # Если атакующий еще не совершил атаку
+        if self.info[room]['last_action'] == '':
+            data = {'key': 4, 'info': [username]}
+            socket_to_send = listened_socket
+
+        # Если атакующий уже совершил атаку
+        else:
+            # Если команда защитника защищает от типа нападения атакующего
+            if self.attack_defend[self.info[room]['last_action']] == result:
+                self.info[room]['last_action'] = ''
+                # Добавление одного очка за верно написанную команду по защите
+                self.info[room]['points'][1] += 1
+                # Отправка верной защиты всем в комнате
+                data = [{'key': 5, 'info': [username, result]}]
+
+                # Отправка вопроса нападающему
+                question = self.defend_questions[self.question_index]
+                answer1 = '\n1) ' + self.dict.quest[question][0][1]
+                answer2 = '\n2) ' + self.dict.quest[question][1][1]
+                answer3 = '\n3) ' + self.dict.quest[question][2][1] + '\n'
+                correct = None
+                for i in range(3):
+                    if self.dict.quest[question][i][2] == 1:
+                        correct = str(i + 1)
+                self.question_index += 1
+
+                question = '\n' + question[1] + answer1 + answer2 + answer3
+                data.append({'key': 6, 'info': [question, correct]})
+                socket_to_send = self.info[room]['socket'][0]
+
+            # Если написана неверная команда или команда не соответствует типу нападения
+            else:
+                data = {'key': 3, 'info': [username]}
+                socket_to_send = listened_socket
+
+        # Обновление значений в эксель таблице
+        self.create_dict(username=username, score_practice=self.info[room]['points'][1])
+        return data, socket_to_send, room
 
     def random_questions(self):
         all_questions_keys = list(self.dict.quest.keys())
@@ -115,37 +218,29 @@ class Server:
         while True:
             try:
                 data = await self.main_loop.sock_recv(listened_socket, 2048)
-                data_decode = data.decode('utf-8')
+                data_decode = pickle.loads(data)
 
                 # Если это первое сообщение, то получаем информацию о токене, фио и количество очков за тест
-                if data_decode.split(self.separator)[0] == 'first message':
-                    token = data_decode.split(self.separator)[1]
-                    username = data_decode.split(self.separator)[2]
-                    score = data_decode.split(self.separator)[3]
-                    # Создаем эксель файл с полученными данными
-                    self.create_dict(ip, token, username, score)
-
-                    # Выбираем комнату и роль для игрока и далее отправляем эти данные пользователю
-                    room = self.available_rooms[0]
-                    self.info['room_' + str(room)]['ip'].append(ip)
-                    self.info['room_' + str(room)]['socket'].append(listened_socket)
-                    role = self.info['room_' + str(room)]['role'][0]
-                    if role == 'attack':
-                        role_sign = ' атакует'
+                if data_decode['key'] == 0:
+                    data, room = self.functions[data_decode['key']](data_decode['info'], ip, listened_socket)
+                    data_encode = pickle.dumps(data)
+                    await self.send_data(room, data_encode, socket=listened_socket)
+                elif data_decode['key'] == 1:
+                    data, socket_to_send, room = self.functions[data_decode['key']](data_decode['info'], listened_socket)
+                    data_encode = pickle.dumps(data)
+                    await self.send_data(room, data_encode, socket=socket_to_send)
+                elif data_decode['key'] == 2:
+                    data, socket_to_send, room = self.functions[data_decode['key']](data_decode['info'], listened_socket)
+                    if type(data) == list:
+                        data_encode = pickle.dumps(data[0])
+                        await self.send_data(room, data_encode)
+                        data_encode = pickle.dumps(data[1])
+                        await self.send_data(room, data_encode, socket=socket_to_send)
                     else:
-                        role_sign = ' защищается'
+                        data_encode = pickle.dumps(data)
+                        await self.send_data(room, data_encode, socket=socket_to_send)
 
-                    self.available_rooms.remove(room)
-                    self.info['room_' + str(room)]['role'].remove(role)
-
-                    data = 'first message' + self.separator + username + ' присоединился к ' + self.separator \
-                           + str(room) + self.separator + ' комнате. ' + self.separator + username + role_sign
-                    await self.send_data('room_' + str(room), data.encode('utf-8'))
-
-                    data = 'role' + self.separator + role
-                    await self.send_data('room_' + str(room), data.encode('utf-8'), socket=listened_socket)
-
-                else:
+                '''else:
                     # Если выбираем режим сервера для практической части
                     if self.flag_practical:
                         await self.practical_part(data_decode, listened_socket)
@@ -164,7 +259,7 @@ class Server:
                         self.info[room]['text'] += str(datetime.now().time()).split('.')[
                                                               0] + ':' + message_to_send
 
-                        await self.send_data(room, message_to_send.encode('utf-8'))
+                        await self.send_data(room, message_to_send.encode('utf-8'))'''
 
             except ConnectionResetError:
                 print('Пользователь вышел')
@@ -207,7 +302,6 @@ class Server:
 
     # Практическая часть
     async def practical_part(self, data_decode, socket):
-        #print('Got message: ', data_decode)
         username = data_decode.split(self.separator)[0]
         room = data_decode.split(self.separator)[1]
         role = data_decode.split(self.separator)[2]
