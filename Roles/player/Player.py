@@ -26,6 +26,8 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         self.client = Client(username, token, points, group)
         self.setup_connect()
         self.flag_correct = None
+        self.functions = [self.client_code0, self.client_code1, self.client_code2, self.client_code3,
+                          self.client_code4, self.client_code5, self.client_code6]
 
         # Настройка карты
         self.scene = QtWidgets.QGraphicsScene()
@@ -86,39 +88,83 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                                       y2=arc.node_to.y + self.canvas.computer_pixmap.height() / 2)
             self.canvas.scene().addItem(custom_line)
 
+    # Первое сообщение
+    def client_code0(self, args):
+        # args = [username, room, role]
+        username = args[0]
+        room = args[1]
+        role = args[2]
+        self.client.role = role
+        self.client.room = 'room_' + str(room)
+        data = 'Комната: {}. '.format(room)
+        if role == 'attack':
+            data += '{}, Ваша задача: атаковать локальную сеть.'.format(username)
+        else:
+            data += '{}, Ваша задача: защитить локальную сеть.'.format(username)
+        return data
+
+    # Верная атака
+    def client_code1(self, args):
+        # args = [username, result]
+        username = args[0]
+        result = str(args[1])
+        attack = result.split(')')[0]
+        data = '{} предпринял атаку: {}.'.format(username, result)
+        thread = Thread(target=self.attack_node, args=(int(attack.split(' ')[2]), Computer), daemon=True)
+        thread.start()
+        return data
+
+    def client_code2(self, args):
+        # args = [result]
+        result = str(args[0])
+        data = result
+        return data
+
+    def client_code3(self, args):
+        # args = [username]
+        username = args[0]
+        data = '{}, нельзя использовать данную команду.'.format(username)
+        return data
+
+    def client_code4(self, args):
+        # args = [username]
+        username = args[0]
+        data = '{}, на данную сеть не совершенно никаких атак.'.format(username)
+        return data
+
+    def client_code5(self, args):
+        # args = [username, result]
+        username = args[0]
+        result = args[1]
+        data = '{} предпринял защиту ({}) и воздействовал вопросом.'.format(username, result)
+        defend = result.split(')')[0]
+        self.defend_node(int(defend.split(' ')[2]), Computer)
+        return data
+
+    def client_code6(self, args):
+        # args = [question, correct]
+        question = args[0]
+        correct = args[1]
+        self.flag_correct = correct
+        return question
+
     # Считывание сообщений с сервера
     # FIXME переделать структуру сообщений
     def text_on_textBox(self):
         while True:
             data = self.client.socket.recv(2048)
-            data_decode = data.decode("utf-8")
-            # Если это первое сообщение с сервера, то в нем содержится иформация о комнате и роли игрока
-            if data_decode.split(self.client.separator)[0] == 'first message':
-                self.client.room = 'room_' + data_decode.split(self.client.separator)[2]
-                data_decode = data_decode.split(self.client.separator)[1] + data_decode.split(self.client.separator)[2] + \
-                       data_decode.split(self.client.separator)[3] + data_decode.split(self.client.separator)[4]
+            data_decode = pickle.loads(data)
+            data_show = self.functions[data_decode['key']](data_decode['info'])
+            # Если сервер настроен на общение
+            #else:
+                #data_decode = f"{str(datetime.now().time()).split('.')[0]}:  {data_decode}"
 
-            # Здесь содержится информация о роли конкретного игрока
-            elif data_decode.split(self.client.separator)[0] == 'role':
-                self.client.role = data_decode.split(self.client.separator)[1]
-                continue
+            # Добавление сообщения на экран
+            # FIXME добавить получение карты передавать data (чистую) в restore_map()
+            # FIXME Незаконно менять объекты основного потока не в основном потоке
+            self.textBrowser.append('>>> ' + data_show)
 
-            # Если сообщение пользователя некорректно, то оно просто выводится
-            elif data_decode.split(self.client.separator)[0] == 'incorrect':
-                data_decode = data_decode.split(self.client.separator)[1]
-
-            # Если атака корректна, то происходит обработка сообщения в зависимости от объекта и типа атаки
-            elif data_decode.split(self.client.separator)[0] == 'attack_correct':
-                data_decode = data_decode.split(self.client.separator)[1]
-                # Пример вызова функции атаки. Вместо 2 нужен id,
-                # вместо Computer - Router или Commutator (в зависимости от команды)
-                # attack представляет из себя одну из строк из списка ('атаковать комп 1 ddos',
-                # 'атаковать комп 1 пароль')
-                attack = data_decode.split(' предпринял атаку (')[1].split(')')[0]
-                thread = Thread(target=self.attack_node, args=(int(attack.split(' ')[2]), Computer), daemon=True)
-                thread.start()
-
-            # Если защита корректна, то происходит обработка сообщения в зависимости от объекта и типа защиты
+            '''# Если защита корректна, то происходит обработка сообщения в зависимости от объекта и типа защиты
             elif data_decode.split(self.client.separator)[0] == 'defend_correct1':
                 data_decode = data_decode.split(self.client.separator)[1]
                 # defend представляет из себя одну из строк из списка ('защитить комп 1 ddos',
@@ -132,15 +178,7 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                 question = data_decode.split(self.client.separator)[1]
                 self.flag_correct = data_decode.split(self.client.separator)[2]
                 self.textBrowser.append(question)
-                continue
-            # Если сервер настроен на общение
-            else:
-                data_decode = f"{str(datetime.now().time()).split('.')[0]}:  {data_decode}"
-
-            # Добавление сообщения на экран
-            # FIXME добавить получение карты передавать data (чистую) в restore_map()
-            # FIXME Незаконно менять объекты основного потока не в основном потоке
-            self.textBrowser.append('>>> ' + data_decode)
+                continue'''
 
     # Помечает соответствующую вершину красным
     # class_type - это тип класса: Computer, Router, Commutator
@@ -181,26 +219,25 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         self.plainTextEdit.setPlaceholderText('Введите команду')
 
         if self.client.first_message:
-            data = 'first message' + self.client.separator + self.client.token + self.client.separator\
-                   + self.client.username + self.client.separator + self.client.points
+            data = {'key': 0, 'info': [self.client.token, self.client.username, self.client.points]}
             self.client.first_message = False
         else:
+            user_answer = self.plainTextEdit.toPlainText()
             if self.flag_correct is not None:
-                user_answer = self.plainTextEdit.toPlainText()
                 if user_answer != self.flag_correct:
-                    data = self.client.username + self.client.separator + self.client.room + self.client.separator \
-                           + self.client.role + self.client.separator + 'Атакующий неправильно ответил на вопрос'
-                    self.flag_correct = None
-
+                    result = 0
                 else:
-                    data = self.client.username + self.client.separator + self.client.room + self.client.separator \
-                           + self.client.role + self.client.separator + 'Атакующий правильно ответил на вопрос'
-                    self.flag_correct = None
+                    result = 1
+                self.flag_correct = None
             else:
-                data = self.client.username + self.client.separator + self.client.room + self.client.separator\
-                       + self.client.role + self.client.separator + self.plainTextEdit.toPlainText()
+                result = user_answer
+            if self.client.role == 'attack':
+                data = {'key': 1, 'info': [self.client.username, self.client.room, result]}
+            else:
+                data = {'key': 2, 'info': [self.client.username, self.client.room, result]}
 
-        self.client.socket.send(data.encode("utf-8"))
+        data_pickle = pickle.dumps(data)
+        self.client.socket.send(data_pickle)
         self.plainTextEdit.clear()
 
     def setup_connect(self):
