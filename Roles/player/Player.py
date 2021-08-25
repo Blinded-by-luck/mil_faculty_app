@@ -3,18 +3,19 @@ import time
 from PyQt5 import QtCore, QtWidgets
 from sys import exit
 from threading import Thread
-from PyQt5.QtWidgets import QMessageBox
+
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox, QApplication, QVBoxLayout, QPushButton, QSizePolicy, QLabel, QLineEdit, \
+    QTextBrowser, QPlainTextEdit
 import sys
-from datetime import datetime
 
 from Roles.player.design_player import Ui_interface_player
 from Server_Client.Sockets import Client
 from Test_app.Test_app import TestApp
 import pickle
-from PyQt5.QtWidgets import QFileDialog
 from gui_lib.Arc import Arc
 from gui_lib.Canvas import Custom_line, Custom_label, Canvas, CANVAS_WORKING_MODE
-from gui_lib.Net import Net
 from gui_lib.Nodes import Node, Computer
 
 
@@ -22,28 +23,156 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
 
     def __init__(self, username, token, points, group):
         super().__init__()
-        self.setupUi(self)
         self.client = Client(username, token, points, group)
-        self.setup_connect()
         self.flag_correct = None
         self.functions = [self.client_code0, self.client_code1, self.client_code2, self.client_code3,
                           self.client_code4, self.client_code5, self.client_code6]
 
-        # Настройка карты
-        self.scene = QtWidgets.QGraphicsScene()
-        self.scene.setSceneRect(0, 0, 800, 300)
-        self.canvas = Canvas(self.centralwidget, self, CANVAS_WORKING_MODE.GAME)
-        self.canvas.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.canvas.net = Net({}, {}, {}, {}, {})
-        self.canvas.setGeometry(QtCore.QRect(90, 79, 750, 250))
-        self.canvas.setScene(self.scene)
-        #
-        self.horizontal_med_layout.addWidget(self.canvas)
+        # Отрисовка
+        self.setObjectName("interface_player")
+        desktop_rect = QApplication.desktop().availableGeometry()
+        self.resize(desktop_rect.width(), desktop_rect.height())
+        self.move(desktop_rect.left(), desktop_rect.top())
+        self.setMinimumSize(1320, 800)
+        self.setStyleSheet("background: #fffdf5;")
+        self.statusbar = QtWidgets.QStatusBar(self)
+        self.statusbar.setObjectName("statusbar")
+        self.setStatusBar(self.statusbar)
 
-        self.centralwidget.setLayout(self.main_layout)
-        # Привязка событий нажатия
-        self.send_msg_btn.clicked.connect(self.send_msg_btn_click)
-        self.download_btn.clicked.connect(self.download_btn_click)
+        self.stacked_widget = QtWidgets.QStackedWidget()
+        self.stacked_widget.setObjectName("stacked_widget")
+        self.setCentralWidget(self.stacked_widget)
+
+        # stacked_widget content
+        self.connection_widget = QtWidgets.QWidget()
+        self.connection_widget.setObjectName("connection_widget")
+
+        self.room_widget = QtWidgets.QWidget()
+        self.room_widget.setObjectName("room_widget")
+        self.room_widget.setStyleSheet("border: 0 px;")
+
+        self.stacked_widget.addWidget(self.connection_widget)
+        self.stacked_widget.addWidget(self.room_widget)
+        # end stacked_widget content
+
+        # connection_widget content
+        self.main_layout_connection = QVBoxLayout()
+        self.main_layout_connection.addStretch(0)
+        self.main_layout_connection.setObjectName("main_layout_connection")
+
+        self.connection_widget.setLayout(self.main_layout_connection)
+        # end connection_widget content
+
+        # main_layout_connection content
+        self.connection_label = QLabel()
+        self.connection_label.setObjectName("connection_label")
+        self.connection_label.setText("Введите ip сервера:")
+        print(self.connection_label.sizeHint())
+        font = QFont("Helvetica", 14)
+        self.connection_label.setFont(font)
+
+        self.connection_line_edit = QLineEdit()
+        self.connection_line_edit.setObjectName("connection_line_edit")
+        self.connection_line_edit.setFont(font)
+        self.connection_line_edit.setStyleSheet("background: white;")
+
+        self.connect_btn = QPushButton()
+        self.connect_btn.setObjectName("connect_btn")
+        self.connect_btn.setText("Подключиться")
+        self.connect_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.connect_btn.clicked.connect(self.connect_btn_click)
+        self.connect_btn.setStyleSheet("QPushButton {background: #03a9f4;                   \
+                                        color: #fff; border-radius: 15px;                   \
+                                        font-size: 12pt;                                    \
+                                        font-family: Century Gothic, sans-serif;}           \
+                                        QPushButton:hover {background-color:#64bee8;}       \
+                                        QPushButton:pressed {background-color:#03a9f4;}")
+
+        self.vertical_spacer_connection = QtWidgets.QSpacerItem(0, int(desktop_rect.height() / 2.5),
+                                                                QSizePolicy.Ignored,
+                                                                QSizePolicy.Expanding)
+
+        self.main_layout_connection.addWidget(self.connection_label, alignment=Qt.AlignCenter)
+        self.main_layout_connection.addWidget(self.connection_line_edit, alignment=Qt.AlignCenter)
+        self.main_layout_connection.addWidget(self.connect_btn, alignment=Qt.AlignCenter)
+        self.main_layout_connection.addSpacerItem(self.vertical_spacer_connection)
+        # end main_layout_connection content
+
+        # room_widget_content
+        self.main_layout_room = QVBoxLayout()
+        self.main_layout_room.setObjectName("main_layout_room")
+
+        self.room_widget.setLayout(self.main_layout_room)
+        # end room_widget_content
+
+        # main_layout_room content
+        self.header_room = QtWidgets.QTextEdit()
+        self.header_room.setObjectName("header_room")
+        self.header_room.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        self.header_room.setFixedHeight(50)
+        self.header_room.setText("Комната №")
+        self.header_room.setAlignment(Qt.AlignCenter)
+        self.header_room.setReadOnly(True)
+        self.header_room.setStyleSheet("font-size: 16pt;"
+                                       "color: black;")
+
+        self.scene = QtWidgets.QGraphicsScene()
+        self.canvas = Canvas(self.stacked_widget, self, CANVAS_WORKING_MODE.EDIT)
+        self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.canvas.setStyleSheet("background-color: rgb(255, 255, 255);"
+                                  "border: 1px solid grey")
+        self.canvas.setScene(self.scene)
+
+        self.text_browser_room = QTextBrowser()
+        self.text_browser_room.setObjectName("text_browser_room")
+        self.text_browser_room.setMinimumSize(QtCore.QSize(500, 150))
+        self.text_browser_room.setMaximumSize(QtCore.QSize(desktop_rect.width(), 150))
+        self.text_browser_room.setStyleSheet("background: #edfcff;"
+                                             "border: 1px solid grey;"
+                                             "font-size: 12pt;"
+                                             "font-family: Century Gothic, sans-serif;")
+
+        self.plain_text_edit_room = QPlainTextEdit()
+        self.plain_text_edit_room.setObjectName("plain_text_edit_room")
+        self.plain_text_edit_room.setMinimumSize(QtCore.QSize(500, 70))
+        self.plain_text_edit_room.setMaximumSize(QtCore.QSize(desktop_rect.width(), 70))
+        self.plain_text_edit_room.setStyleSheet("background: white;"
+                                                "border: 1px solid grey;"
+                                                "font-size: 12pt;"
+                                                "font-family: Century Gothic, sans-serif;")
+
+        self.send_msg_btn_room = QPushButton()
+        self.send_msg_btn_room.setObjectName("send_msg_btn_room")
+        self.send_msg_btn_room.setMinimumSize(QtCore.QSize(200, 40))
+        self.send_msg_btn_room.setMaximumSize(QtCore.QSize(desktop_rect.width(), 40))
+        self.send_msg_btn_room.setText("Отправить")
+        self.send_msg_btn_room.clicked.connect(self.send_msg_btn_click)
+        self.send_msg_btn_room.setStyleSheet(
+            "QPushButton {                                  \
+                                        background: #03a9f4;                        \
+                                        color: #fff;                                \
+                                        border-radius: 15px;                        \
+                                        font-size: 12pt;                            \
+                                        font-family: Century Gothic, sans-serif;}   \
+                                    QPushButton:hover {                             \
+                                        background-color:#64bee8;                   \
+                                    }                                               \
+                                    QPushButton:pressed {                           \
+                                        background-color:#03a9f4;                   \
+                                    }")
+
+        self.main_layout_room.addWidget(self.header_room)
+        self.main_layout_room.addWidget(self.canvas)
+        self.main_layout_room.addWidget(self.text_browser_room)
+        self.main_layout_room.addWidget(self.plain_text_edit_room)
+        self.main_layout_room.addWidget(self.send_msg_btn_room)
+        # end main_layout_room content
+
+        self.retranslate_ui()
+
+    def retranslate_ui(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.setWindowTitle(_translate("interface_player", "Project"))
 
     def restore_map(self, data):
         # отлов исключений
@@ -64,6 +193,19 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                                       x1=arc.node_from.x, y1=arc.node_from.y,
                                       x2=arc.node_to.x, y2=arc.node_to.y)
             self.canvas.scene().addItem(custom_line)
+
+    def connect_btn_click(self):
+        try:
+            self.client.socket.connect(
+                (self.connection_line_edit.text(), 1234)
+            )
+            self.client.socket.settimeout(None)
+            self.stacked_widget.setCurrentIndex(1)
+        except:
+            alert = QMessageBox()
+            alert.setText('Ошибка подключения к серверу!')
+            alert.exec_()
+
 
     def download_btn_click(self):
         # отлов исключений
@@ -156,13 +298,13 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             data_decode = pickle.loads(data)
             data_show = self.functions[data_decode['key']](data_decode['info'])
             # Если сервер настроен на общение
-            #else:
-                #data_decode = f"{str(datetime.now().time()).split('.')[0]}:  {data_decode}"
+            # else:
+            # data_decode = f"{str(datetime.now().time()).split('.')[0]}:  {data_decode}"
 
             # Добавление сообщения на экран
             # FIXME добавить получение карты передавать data (чистую) в restore_map()
             # FIXME Незаконно менять объекты основного потока не в основном потоке
-            self.textBrowser.append('>>> ' + data_show)
+            self.text_browser_room.append('>>> ' + data_show)
 
             '''# Если защита корректна, то происходит обработка сообщения в зависимости от объекта и типа защиты
             elif data_decode.split(self.client.separator)[0] == 'defend_correct1':
@@ -216,13 +358,13 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
     def send_msg_btn_click(self):
         listen_thread = Thread(target=self.text_on_textBox)
         listen_thread.start()
-        self.plainTextEdit.setPlaceholderText('Введите команду')
+        self.plain_text_edit_room.setPlaceholderText('Введите команду')
 
         if self.client.first_message:
             data = {'key': 0, 'info': [self.client.token, self.client.username, self.client.points]}
             self.client.first_message = False
         else:
-            user_answer = self.plainTextEdit.toPlainText()
+            user_answer = self.plain_text_edit_room.toPlainText()
             if self.flag_correct is not None:
                 if user_answer != self.flag_correct:
                     result = 0
@@ -238,21 +380,7 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
 
         data_pickle = pickle.dumps(data)
         self.client.socket.send(data_pickle)
-        self.plainTextEdit.clear()
-
-    def setup_connect(self):
-        try:
-             self.client.socket.connect(
-                 ("127.0.0.1", 1234)
-             )
-            # self.client.socket.connect(
-            #    ("172.18.7.101", 1234)
-            #)
-        except:
-            alert = QMessageBox()
-            alert.setText('Ошибка подключения к серверу!')
-            alert.exec_()
-            exit()
+        self.plain_text_edit_room.clear()
 
 
 if __name__ == "__main__":

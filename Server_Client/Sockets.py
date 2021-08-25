@@ -15,6 +15,7 @@ class Client:
             socket.AF_INET,
             socket.SOCK_STREAM,
         )
+        self.socket.settimeout(5)
         self.username = username
         self.token = token
         self.points = str(points)

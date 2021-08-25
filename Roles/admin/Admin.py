@@ -92,6 +92,7 @@ class Admin(QtWidgets.QMainWindow):
 
         # grid_layout_hall content
         self.room_tables = np.empty(12, dtype=QTableWidget)
+        font = QFont("Helvetica", 18)
 
         for i in range(self.room_tables.size):
             table = QTableWidget()
@@ -109,17 +110,17 @@ class Admin(QtWidgets.QMainWindow):
 
             item = QTableWidgetItem("Комната № " + str(i + 1))
             item.setToolTip("Перейти в комнату")
-            item.setFont(QFont("Helvetica", 18))
+            item.setFont(font)
             item.setTextAlignment(Qt.AlignCenter)
             table.setItem(0, 0, item)
 
             item = QTableWidgetItem("Проскурин Валерий Геннадьевич")
-            item.setFont(QFont("Helvetica", 18))
+            item.setFont(font)
             item.setTextAlignment(Qt.AlignCenter)
             table.setItem(1, 0, item)
 
             item = QTableWidgetItem("ФИО 2 игрока")
-            item.setFont(QFont("Helvetica", 18))
+            item.setFont(font)
             item.setTextAlignment(Qt.AlignCenter)
             table.setItem(2, 0, item)
 
@@ -173,7 +174,6 @@ class Admin(QtWidgets.QMainWindow):
         self.return_btn.setMinimumSize(QtCore.QSize(200, 40))
         self.return_btn.clicked.connect(self.return_btn_click)
         self.return_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        print(self.return_btn.sizeHint())
         self.return_btn.setStyleSheet("QPushButton {background: #03a9f4;                \
                                     color: #fff; border-radius: 15px;                   \
                                     font-size: 12pt;                                    \
@@ -194,25 +194,26 @@ class Admin(QtWidgets.QMainWindow):
         self.header_room_table.setStyleSheet(":item { border: 1px solid grey; }")
 
         self.header_room_table.setSpan(0, 0, 1, 2)
+        font = QFont("Helvetica", 14)
         item = QTableWidgetItem("Комната №")
-        item.setFont(QFont("Helvetica", 14))
+        item.setFont(font)
         item.setTextAlignment(Qt.AlignCenter)
         self.header_room_table.setItem(0, 0, item)
 
         item = QTableWidgetItem("ФИО 1 игрока")
-        item.setFont(QFont("Helvetica", 14))
+        item.setFont(font)
         item.setTextAlignment(Qt.AlignCenter)
         self.header_room_table.setItem(1, 0, item)
 
         item = QTableWidgetItem("ФИО 2 игрока")
-        item.setFont(QFont("Helvetica", 14))
+        item.setFont(font)
         item.setTextAlignment(Qt.AlignCenter)
         self.header_room_table.setItem(1, 1, item)
 
         self.header_room_table.resizeColumnsToContents()
         self.header_room_table.resizeRowsToContents()
 
-        self.up_spacer_room = QtWidgets.QSpacerItem(desktop_rect.width() / 16, desktop_rect.height(),
+        self.up_spacer_room = QtWidgets.QSpacerItem(desktop_rect.width() // 16, desktop_rect.height(),
                                                     QtWidgets.QSizePolicy.Expanding,
                                                     QtWidgets.QSizePolicy.Ignored)
 
