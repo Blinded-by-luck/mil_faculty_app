@@ -7,7 +7,7 @@ from threading import Thread
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QApplication, QVBoxLayout, QPushButton, QSizePolicy, QLabel, QLineEdit, \
-    QTextBrowser, QPlainTextEdit
+    QTextBrowser, QPlainTextEdit, QHBoxLayout
 import sys
 
 from Server_Client.Sockets import Client
@@ -106,15 +106,8 @@ class Player(QtWidgets.QMainWindow):
         # end room_widget_content
 
         # main_layout_room content
-        self.header_room = QtWidgets.QTextEdit()
-        self.header_room.setObjectName("header_room")
-        self.header_room.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        self.header_room.setFixedHeight(50)
-        self.header_room.setText("Комната №")
-        self.header_room.setAlignment(Qt.AlignCenter)
-        self.header_room.setReadOnly(True)
-        self.header_room.setStyleSheet("font-size: 16pt;"
-                                       "color: black;")
+        self.header_layout_room = QHBoxLayout()
+        self.header_layout_room.setObjectName("header_layout_room")
 
         self.scene = QtWidgets.QGraphicsScene()
         self.canvas = Canvas(self.stacked_widget, self, CANVAS_WORKING_MODE.EDIT)
@@ -161,12 +154,68 @@ class Player(QtWidgets.QMainWindow):
                                         background-color:#03a9f4;                   \
                                     }")
 
-        self.main_layout_room.addWidget(self.header_room)
+        self.main_layout_room.addLayout(self.header_layout_room)
         self.main_layout_room.addWidget(self.canvas)
         self.main_layout_room.addWidget(self.text_browser_room)
         self.main_layout_room.addWidget(self.plain_text_edit_room)
         self.main_layout_room.addWidget(self.send_msg_btn_room)
         # end main_layout_room content
+
+        # header_layout_room
+        self.header_room = QtWidgets.QTextEdit()
+        self.header_room.setObjectName("header_room")
+        self.header_room.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        self.header_room.setFixedHeight(50)
+        self.header_room.setText("Комната № 1")
+        # self.header_room.setAlignment(Qt.AlignCenter)
+        self.header_room.setReadOnly(True)
+        self.header_room.setStyleSheet("font-size: 16pt;"
+                                       "color: black;")
+
+        self.display_attacker_btn = QPushButton()
+        self.display_attacker_btn.setObjectName("display_attacker_btn")
+        self.display_attacker_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.display_attacker_btn.setMaximumSize(QtCore.QSize(desktop_rect.width(), 40))
+        self.display_attacker_btn.setText("Атакующий")
+        self.display_attacker_btn.clicked.connect(self.display_attacker_btn_click)
+        self.display_attacker_btn.setStyleSheet(
+                                    "QPushButton {                                  \
+                                        background: #03a9f4;                        \
+                                        color: #fff;                                \
+                                        border-radius: 15px;                        \
+                                        font-size: 12pt;                            \
+                                        font-family: Century Gothic, sans-serif;}   \
+                                    QPushButton:hover {                             \
+                                        background-color:#64bee8;                   \
+                                    }                                               \
+                                    QPushButton:pressed {                           \
+                                        background-color:#03a9f4;                   \
+                                    }")
+
+        self.display_defender_btn = QPushButton()
+        self.display_defender_btn.setObjectName("display_defender_btn")
+        self.display_defender_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.display_defender_btn.setMaximumSize(QtCore.QSize(desktop_rect.width(), 40))
+        self.display_defender_btn.setText("Защитник")
+        self.display_defender_btn.clicked.connect(self.display_defender_btn_click)
+        self.display_defender_btn.setStyleSheet(
+                                    "QPushButton {                                  \
+                                        background: #03a9f4;                        \
+                                        color: #fff;                                \
+                                        border-radius: 15px;                        \
+                                        font-size: 12pt;                            \
+                                        font-family: Century Gothic, sans-serif;}   \
+                                    QPushButton:hover {                             \
+                                        background-color:#64bee8;                   \
+                                    }                                               \
+                                    QPushButton:pressed {                           \
+                                        background-color:#03a9f4;                   \
+                                    }")
+
+        self.header_layout_room.addWidget(self.header_room)
+        self.header_layout_room.addWidget(self.display_attacker_btn)
+        self.header_layout_room.addWidget(self.display_defender_btn)
+        # end header_layout_room
 
         self.retranslate_ui()
 
@@ -197,7 +246,7 @@ class Player(QtWidgets.QMainWindow):
     def connect_btn_click(self):
         try:
             self.client.socket.connect(
-                (self.connection_line_edit.text(), 1234)
+                (self.connection_line_edit.text().strip(), 1234)
             )
             self.client.socket.settimeout(None)
             self.stacked_widget.setCurrentIndex(1)
@@ -333,6 +382,22 @@ class Player(QtWidgets.QMainWindow):
                     node.is_active = False
                     return True
         return False
+
+    def display_defender_btn_click(self):
+        f = open('defender_cheat_sheet.txt', 'r')
+        message_box = QMessageBox()
+        message_box.setMinimumSize(800, 600)
+        message_box.setText(f.read())
+        f.close()
+        message_box.exec_()
+
+
+    def display_attacker_btn_click(self):
+        f = open('attacker_cheat_sheet.txt', 'r')
+        message_box = QMessageBox()
+        message_box.setText(f.read())
+        f.close()
+        message_box.exec_()
 
     def send_msg_btn_click(self):
         listen_thread = Thread(target=self.text_on_textBox)

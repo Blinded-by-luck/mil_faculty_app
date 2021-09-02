@@ -82,7 +82,7 @@ class Admin(QtWidgets.QMainWindow):
         self.header_hall = QtWidgets.QTextEdit()
         self.header_hall.setObjectName("header_hall")
         self.header_hall.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        self.header_hall.setText("Заголовок")
+        self.header_hall.setText("Холл")
         self.header_hall.setAlignment(Qt.AlignCenter)
         self.header_hall.setReadOnly(True)
         self.header_hall.setStyleSheet("font-size: 32pt;"
