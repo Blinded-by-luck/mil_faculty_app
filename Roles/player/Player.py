@@ -7,10 +7,9 @@ from threading import Thread
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QApplication, QVBoxLayout, QPushButton, QSizePolicy, QLabel, QLineEdit, \
-    QTextBrowser, QPlainTextEdit
+    QTextBrowser, QPlainTextEdit, QHBoxLayout
 import sys
 
-from Roles.player.design_player import Ui_interface_player
 from Server_Client.Sockets import Client
 from Test_app.Test_app import TestApp
 import pickle
@@ -19,14 +18,15 @@ from gui_lib.Canvas import Custom_line, Custom_label, Canvas, CANVAS_WORKING_MOD
 from gui_lib.Nodes import Node, Computer
 
 
-class Player(QtWidgets.QMainWindow, Ui_interface_player):
+class Player(QtWidgets.QMainWindow):
 
     def __init__(self, username, token, points, group):
         super().__init__()
         self.client = Client(username, token, points, group)
         self.flag_correct = None
-        self.functions = [self.client_code0, self.client_code1, self.client_code2, self.client_code3,
-                          self.client_code4, self.client_code5, self.client_code6]
+        self.functions = [self.client_first_connection, self.client_correct_attack, self.client_code2,
+                          self.client_wrong_attack_or_defend, self.client_net_is_safe,
+                          self.client_correct_defend, self.client_correct_defend_question]
 
         # Отрисовка
         self.setObjectName("interface_player")
@@ -106,15 +106,8 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         # end room_widget_content
 
         # main_layout_room content
-        self.header_room = QtWidgets.QTextEdit()
-        self.header_room.setObjectName("header_room")
-        self.header_room.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        self.header_room.setFixedHeight(50)
-        self.header_room.setText("Комната №")
-        self.header_room.setAlignment(Qt.AlignCenter)
-        self.header_room.setReadOnly(True)
-        self.header_room.setStyleSheet("font-size: 16pt;"
-                                       "color: black;")
+        self.header_layout_room = QHBoxLayout()
+        self.header_layout_room.setObjectName("header_layout_room")
 
         self.scene = QtWidgets.QGraphicsScene()
         self.canvas = Canvas(self.stacked_widget, self, CANVAS_WORKING_MODE.EDIT)
@@ -161,12 +154,68 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                                         background-color:#03a9f4;                   \
                                     }")
 
-        self.main_layout_room.addWidget(self.header_room)
+        self.main_layout_room.addLayout(self.header_layout_room)
         self.main_layout_room.addWidget(self.canvas)
         self.main_layout_room.addWidget(self.text_browser_room)
         self.main_layout_room.addWidget(self.plain_text_edit_room)
         self.main_layout_room.addWidget(self.send_msg_btn_room)
         # end main_layout_room content
+
+        # header_layout_room
+        self.header_room = QtWidgets.QTextEdit()
+        self.header_room.setObjectName("header_room")
+        self.header_room.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        self.header_room.setFixedHeight(50)
+        self.header_room.setText("Комната № 1")
+        # self.header_room.setAlignment(Qt.AlignCenter)
+        self.header_room.setReadOnly(True)
+        self.header_room.setStyleSheet("font-size: 16pt;"
+                                       "color: black;")
+
+        self.display_attacker_btn = QPushButton()
+        self.display_attacker_btn.setObjectName("display_attacker_btn")
+        self.display_attacker_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.display_attacker_btn.setMaximumSize(QtCore.QSize(desktop_rect.width(), 40))
+        self.display_attacker_btn.setText("Атакующий")
+        self.display_attacker_btn.clicked.connect(self.display_attacker_btn_click)
+        self.display_attacker_btn.setStyleSheet(
+                                    "QPushButton {                                  \
+                                        background: #03a9f4;                        \
+                                        color: #fff;                                \
+                                        border-radius: 15px;                        \
+                                        font-size: 12pt;                            \
+                                        font-family: Century Gothic, sans-serif;}   \
+                                    QPushButton:hover {                             \
+                                        background-color:#64bee8;                   \
+                                    }                                               \
+                                    QPushButton:pressed {                           \
+                                        background-color:#03a9f4;                   \
+                                    }")
+
+        self.display_defender_btn = QPushButton()
+        self.display_defender_btn.setObjectName("display_defender_btn")
+        self.display_defender_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.display_defender_btn.setMaximumSize(QtCore.QSize(desktop_rect.width(), 40))
+        self.display_defender_btn.setText("Защитник")
+        self.display_defender_btn.clicked.connect(self.display_defender_btn_click)
+        self.display_defender_btn.setStyleSheet(
+                                    "QPushButton {                                  \
+                                        background: #03a9f4;                        \
+                                        color: #fff;                                \
+                                        border-radius: 15px;                        \
+                                        font-size: 12pt;                            \
+                                        font-family: Century Gothic, sans-serif;}   \
+                                    QPushButton:hover {                             \
+                                        background-color:#64bee8;                   \
+                                    }                                               \
+                                    QPushButton:pressed {                           \
+                                        background-color:#03a9f4;                   \
+                                    }")
+
+        self.header_layout_room.addWidget(self.header_room)
+        self.header_layout_room.addWidget(self.display_attacker_btn)
+        self.header_layout_room.addWidget(self.display_defender_btn)
+        # end header_layout_room
 
         self.retranslate_ui()
 
@@ -197,7 +246,7 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
     def connect_btn_click(self):
         try:
             self.client.socket.connect(
-                (self.connection_line_edit.text(), 1234)
+                (self.connection_line_edit.text().strip(), 1234)
             )
             self.client.socket.settimeout(None)
             self.stacked_widget.setCurrentIndex(1)
@@ -205,7 +254,6 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             alert = QMessageBox()
             alert.setText('Ошибка подключения к серверу!')
             alert.exec_()
-
 
     def download_btn_click(self):
         # отлов исключений
@@ -231,14 +279,14 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             self.canvas.scene().addItem(custom_line)
 
     # Первое сообщение
-    def client_code0(self, args):
+    def client_first_connection(self, args):
         # args = [username, room, role]
         username = args[0]
         room = args[1]
         role = args[2]
         self.client.role = role
-        self.client.room = 'room_' + str(room)
-        data = 'Комната: {}. '.format(room)
+        self.client.room = room
+        data = 'Комната: {}. '.format(room + 1)
         if role == 'attack':
             data += '{}, Ваша задача: атаковать локальную сеть.'.format(username)
         else:
@@ -246,7 +294,7 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         return data
 
     # Верная атака
-    def client_code1(self, args):
+    def client_correct_attack(self, args):
         # args = [username, result]
         username = args[0]
         result = str(args[1])
@@ -262,19 +310,19 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         data = result
         return data
 
-    def client_code3(self, args):
+    def client_wrong_attack_or_defend(self, args):
         # args = [username]
         username = args[0]
         data = '{}, нельзя использовать данную команду.'.format(username)
         return data
 
-    def client_code4(self, args):
+    def client_net_is_safe(self, args):
         # args = [username]
         username = args[0]
         data = '{}, на данную сеть не совершенно никаких атак.'.format(username)
         return data
 
-    def client_code5(self, args):
+    def client_correct_defend(self, args):
         # args = [username, result]
         username = args[0]
         result = args[1]
@@ -283,7 +331,7 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
         self.defend_node(int(defend.split(' ')[2]), Computer)
         return data
 
-    def client_code6(self, args):
+    def client_correct_defend_question(self, args):
         # args = [question, correct]
         question = args[0]
         correct = args[1]
@@ -297,30 +345,10 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             data = self.client.socket.recv(2048)
             data_decode = pickle.loads(data)
             data_show = self.functions[data_decode['key']](data_decode['info'])
-            # Если сервер настроен на общение
-            # else:
-            # data_decode = f"{str(datetime.now().time()).split('.')[0]}:  {data_decode}"
-
             # Добавление сообщения на экран
             # FIXME добавить получение карты передавать data (чистую) в restore_map()
             # FIXME Незаконно менять объекты основного потока не в основном потоке
             self.text_browser_room.append('>>> ' + data_show)
-
-            '''# Если защита корректна, то происходит обработка сообщения в зависимости от объекта и типа защиты
-            elif data_decode.split(self.client.separator)[0] == 'defend_correct1':
-                data_decode = data_decode.split(self.client.separator)[1]
-                # defend представляет из себя одну из строк из списка ('защитить комп 1 ddos',
-                # 'защитить комп 1 пароль')
-                # Пример вызова функции защиты. Вместо 2 нужен id,
-                # вместо Computer - Router или Commutator (в зависимости от команды)
-                defend = data_decode.split(' предпринял защиту (')[1].split(')')[0]
-                self.defend_node(int(defend.split(' ')[2]), Computer)
-
-            elif data_decode.split(self.client.separator)[0] == 'defend_correct2':
-                question = data_decode.split(self.client.separator)[1]
-                self.flag_correct = data_decode.split(self.client.separator)[2]
-                self.textBrowser.append(question)
-                continue'''
 
     # Помечает соответствующую вершину красным
     # class_type - это тип класса: Computer, Router, Commutator
@@ -355,6 +383,22 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
                     return True
         return False
 
+    def display_defender_btn_click(self):
+        f = open('defender_cheat_sheet.txt', 'r')
+        message_box = QMessageBox()
+        message_box.setMinimumSize(800, 600)
+        message_box.setText(f.read())
+        f.close()
+        message_box.exec_()
+
+
+    def display_attacker_btn_click(self):
+        f = open('attacker_cheat_sheet.txt', 'r')
+        message_box = QMessageBox()
+        message_box.setText(f.read())
+        f.close()
+        message_box.exec_()
+
     def send_msg_btn_click(self):
         listen_thread = Thread(target=self.text_on_textBox)
         listen_thread.start()
@@ -367,9 +411,9 @@ class Player(QtWidgets.QMainWindow, Ui_interface_player):
             user_answer = self.plain_text_edit_room.toPlainText()
             if self.flag_correct is not None:
                 if user_answer != self.flag_correct:
-                    result = 0
+                    result = '0'
                 else:
-                    result = 1
+                    result = '1'
                 self.flag_correct = None
             else:
                 result = user_answer
@@ -393,8 +437,9 @@ if __name__ == "__main__":
     token = test.get_token()
     points = test.get_points()
     group = test.get_group()
+    exit_yn = test.get_exit_yn()
 
-    if points < 7:
+    if points < 7 and exit_yn == 0:
         app1 = QtWidgets.QApplication(sys.argv)
         player = Player(username, token, points, group)
         player.show()

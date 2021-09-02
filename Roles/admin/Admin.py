@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QTableView, QTableWidget,
     QSizePolicy
 from PyQt5.QtCore import Qt, QSize
 
-from Roles.admin.design_admin import Ui_interface_admin
+#from Roles.admin.design_admin import Ui_interface_admin
 from Server_Client.Sockets import Client, Server
 import asyncio
 import pandas as pd
@@ -82,7 +82,7 @@ class Admin(QtWidgets.QMainWindow):
         self.header_hall = QtWidgets.QTextEdit()
         self.header_hall.setObjectName("header_hall")
         self.header_hall.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        self.header_hall.setText("Заголовок")
+        self.header_hall.setText("Холл")
         self.header_hall.setAlignment(Qt.AlignCenter)
         self.header_hall.setReadOnly(True)
         self.header_hall.setStyleSheet("font-size: 32pt;"

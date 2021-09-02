@@ -1,6 +1,7 @@
 import pickle
 
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.Qt import QMessageBox
 from Test_app.Dictionary import Questions
 import sys
 import numpy as np
@@ -21,6 +22,8 @@ class TestApp(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.ui.stackedWidget.setCurrentIndex(0)
 
+        self.exit_yn = 0
+        self.exit_x = True
         self.username = ''
         self.group = ''
         self.correct_points = 0
@@ -188,8 +191,8 @@ class TestApp(QtWidgets.QMainWindow):
         self.ui.pushButton_9.clicked.connect(lambda: self.pb2_clicked('multiple', self.list_of_questions_keys[7], 7))
         self.ui.pushButton_10.clicked.connect(lambda: self.pb2_clicked('one', self.list_of_questions_keys[8], 8))
         self.ui.pushButton_11.clicked.connect(lambda: self.pb3_clicked('multiple', self.list_of_questions_keys[9], 9))
-        self.ui.pushButton_12.clicked.connect(lambda: self.close())
-        self.ui.pushButton_13.clicked.connect(lambda: self.close())
+        self.ui.pushButton_12.clicked.connect(lambda: self.close_button())
+        self.ui.pushButton_13.clicked.connect(lambda: self.close_button())
 
     # Подключение radio buttons
     def radio_buttons(self):
@@ -379,6 +382,27 @@ class TestApp(QtWidgets.QMainWindow):
         else:
             return 0
 
+    def close_button(self):
+        self.exit_x = False
+        self.close()
+
+    def closeEvent(self, event):
+        if self.exit_x:
+            reply = QMessageBox.question \
+                (self, 'Вы нажали на крестик',
+                 "Вы уверены, что хотите уйти?",
+                 QMessageBox.Yes,
+                 QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.exit_yn = 1
+                event.accept()
+            else:
+                self.exit_yn = 0
+                event.ignore()
+
+        else:
+            event.accept()
+
     def get_token(self):
         return self.password
 
@@ -390,6 +414,9 @@ class TestApp(QtWidgets.QMainWindow):
 
     def get_group(self):
         return self.group
+
+    def get_exit_yn(self):
+        return self.exit_yn
 
 
 if __name__ == '__main__':
