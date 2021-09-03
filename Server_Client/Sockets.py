@@ -26,11 +26,12 @@ class Client:
 
 
 class Server:
-    def __init__(self):
+    def __init__(self, admin):
         self.socket = socket.socket(
             socket.AF_INET,
             socket.SOCK_STREAM,
         )
+        self.admin = admin
         self.main_loop = asyncio.new_event_loop()
         self.dictionary = {'ip': [], 'token': [], 'ФИО': [], 'Баллы за тест': [], 'Баллы за практику': []}
         self.dict = Questions()
@@ -42,15 +43,14 @@ class Server:
             self.available_rooms.append(i)
             self.available_rooms.append(i)
 
-        self.attack_defend = {'атаковать комп 1 ddos': 'защитить комп 1 ddos',
-                              'атаковать комп 1 пароль': 'защитить комп 1 пароль',
-                              'атаковать комп 2 ddos': 'защитить комп 2 ddos',
-                              'атаковать комп 2 пароль': 'защитить комп 2 пароль',
-                              'атаковать комп 3 ddos': 'защитить комп 3 ddos',
-                              'атаковать комп 3 пароль': 'защитить комп 3 пароль',
-                              'атаковать комп 4 ddos': 'защитить комп 4 ddos',
-                              'атаковать комп 4 пароль': 'защитить комп 4 пароль'}
-
+        self.attack_defend = {}
+        self.ip_list = []
+        for i in range(5):
+            ip = "10.10.10.0" + str(i + 1)
+            self.ip_list.append(ip)
+            self.attack_defend["sudo "+ ip + " bruteforce"] = "sudo " +\
+                               "add rule name=BLOCK IP ADDRESS - " + ip + " dir=in action=block"
+        print(self.attack_defend)
         self.points_practice = 0
         self.info = [{'username': [], 'ip': [], 'socket': [], 'txt_file': 'room_1.txt',
                       'text': '', 'role': ['attack', 'defend'], 'last_action': '', 'points': [0, 0]},
@@ -100,7 +100,7 @@ class Server:
         self.available_rooms.remove(room)
         self.info[room]['role'].remove(role)
 
-        data = {'key': 0, 'info': [username, room, role]}
+        data = {'key': 0, 'info': [username, room, role, self.admin.canvas.net]}
 
         data_encode = pickle.dumps(data)
         await self.send_data(room, data_encode, socket=listened_socket)
@@ -126,12 +126,18 @@ class Server:
             socket_to_send = None
             # Добавление одного очка за верно написанную команду по атаке
             self.info[room]['points'][0] += 1
-        elif result in [0, 1]:
+        elif result in ['0', '1']:
+            if result == '0':
+                result = 'Атакующий не справился с вопросом.'
+            else:
+                result = 'Атакующий справился с вопросом.'
             data = {'key': 2, 'info': [result]}
             socket_to_send = None
         # Если написал что-то, чего нет в командах для атакующего
         else:
-            data = {'key': 3, 'info': [username]}
+            if result == "ipconfig":
+                ips = '\n'.join(self.ip_list)
+                data = {'key': 3, 'info': [username, ips]}
             socket_to_send = listened_socket
 
         # Обновление значений в эксель таблице
@@ -223,7 +229,7 @@ class Server:
 
         while True:
             try:
-                data = await self.main_loop.sock_recv(listened_socket, 2048)
+                data = await self.main_loop.sock_recv(listened_socket, 4096)
                 data_decode = pickle.loads(data)
                 data_decode['info'].extend([ip, listened_socket])
 

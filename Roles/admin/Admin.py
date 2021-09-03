@@ -25,10 +25,6 @@ from gui_lib.Nodes import Node
 class Admin(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        # инициализация сервера
-        self.server = Server()
-        self.setup_server()
-
         # Отрисовка
         self.setObjectName("interface_admin")
         desktop_rect = QApplication.desktop().availableGeometry()
@@ -344,6 +340,10 @@ class Admin(QtWidgets.QMainWindow):
         self.vertical_down_layout_room.addWidget(self.log_widget)
         # end vertical_down_layout content
 
+        # инициализация сервера
+        self.server = Server(self)
+        self.setup_server()
+
         self.retranslate_ui()
 
     def retranslate_ui(self):
@@ -458,8 +458,8 @@ class Admin(QtWidgets.QMainWindow):
 
     # Настройка сервера
     def setup_server(self):
-        self.server.socket.bind(('127.0.0.1', 1234))
-        # self.server.socket.bind(('172.18.7.101', 1234))
+        # self.server.socket.bind(('127.0.0.1', 1234))
+        self.server.socket.bind(('172.18.7.101', 1234))
         self.server.socket.listen(3)
         self.server.socket.setblocking(False)
         print('Сервер запущен')

@@ -255,12 +255,10 @@ class Player(QtWidgets.QMainWindow):
             alert.setText('Ошибка подключения к серверу!')
             alert.exec_()
 
-    def download_btn_click(self):
+    def download_btn_click(self, net):
         # отлов исключений
-        self.download_btn.hide()
         self.canvas.reset_temp_data()
-        net = self.client.socket.recv(1024)
-        self.canvas.net = pickle.loads(net)
+        self.canvas.net = net
         self.scene.clear()
         for key_node in self.canvas.net.nodes:
             node = self.canvas.net.nodes[key_node]
@@ -280,10 +278,12 @@ class Player(QtWidgets.QMainWindow):
 
     # Первое сообщение
     def client_first_connection(self, args):
-        # args = [username, room, role]
+        # args = [username, room, role, net]
         username = args[0]
         room = args[1]
         role = args[2]
+        net = args[3]
+        self.download_btn_click(net)
         self.client.role = role
         self.client.room = room
         data = 'Комната: {}. '.format(room + 1)
@@ -300,7 +300,7 @@ class Player(QtWidgets.QMainWindow):
         result = str(args[1])
         attack = result.split(')')[0]
         data = '{} предпринял атаку: {}.'.format(username, result)
-        thread = Thread(target=self.attack_node, args=(int(attack.split(' ')[2]), Computer), daemon=True)
+        thread = Thread(target=self.attack_node, args=(int(attack.split(' ')[1].split('.')[3][1]), Computer), daemon=True)
         thread.start()
         return data
 
@@ -311,9 +311,13 @@ class Player(QtWidgets.QMainWindow):
         return data
 
     def client_wrong_attack_or_defend(self, args):
-        # args = [username]
+        # args = [username, ips]
         username = args[0]
-        data = '{}, нельзя использовать данную команду.'.format(username)
+        try:
+            ips = args[1]
+            data = ips
+        except:
+            data = '{}, нельзя использовать данную команду.'.format(username)
         return data
 
     def client_net_is_safe(self, args):
@@ -328,7 +332,7 @@ class Player(QtWidgets.QMainWindow):
         result = args[1]
         data = '{} предпринял защиту ({}) и воздействовал вопросом.'.format(username, result)
         defend = result.split(')')[0]
-        self.defend_node(int(defend.split(' ')[2]), Computer)
+        self.defend_node(int(defend.split(' ')[7].split('.')[3][1]), Computer)
         return data
 
     def client_correct_defend_question(self, args):
@@ -342,7 +346,7 @@ class Player(QtWidgets.QMainWindow):
     # FIXME переделать структуру сообщений
     def text_on_textBox(self):
         while True:
-            data = self.client.socket.recv(2048)
+            data = self.client.socket.recv(4096)
             data_decode = pickle.loads(data)
             data_show = self.functions[data_decode['key']](data_decode['info'])
             # Добавление сообщения на экран
@@ -360,11 +364,7 @@ class Player(QtWidgets.QMainWindow):
             fired_pixmap = self.canvas.get_appropriate_fired_pixmap(class_type)
             if node.is_active:
                 node.is_under_attack = True
-                while node.is_under_attack:
-                    node.custom_widget.setPixmap(fired_pixmap)
-                    time.sleep(1)
-                    node.custom_widget.setPixmap(pixmap)
-                    time.sleep(1)
+                node.custom_widget.setPixmap(fired_pixmap)
                 return True
         return False
 
@@ -439,7 +439,8 @@ if __name__ == "__main__":
     group = test.get_group()
     exit_yn = test.get_exit_yn()
 
-    if points < 7 and exit_yn == 0:
+    # if points < 7 and exit_yn == 0:
+    if points < 7:
         app1 = QtWidgets.QApplication(sys.argv)
         player = Player(username, token, points, group)
         player.show()
