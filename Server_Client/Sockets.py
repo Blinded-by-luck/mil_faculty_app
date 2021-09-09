@@ -2,15 +2,42 @@ import asyncio
 import pickle
 import socket
 from datetime import datetime
-from threading import Thread
+from gui_lib.Net import Net
+from PyQt5 import QtCore
 
 from Test_app.Dictionary import Questions
 import pandas as pd
-import numpy as np
 from random import shuffle
+from gui_lib.Nodes import Computer
+
+
+# Слушатель сообщений, получаемых с сервера
+class MessageHandler(QtCore.QObject):
+
+    textbox_signal = QtCore.pyqtSignal(str)
+    download_net_signal = QtCore.pyqtSignal(Net, int)
+    display_net_signal = QtCore.pyqtSignal(int)
+    correct_attack_signal = QtCore.pyqtSignal(int, type)
+    correct_defend_signal = QtCore.pyqtSignal(int, type)
+    running = False
+
+    def __init__(self, client):
+        super().__init__()
+        self.client = client
+
+    # Слушаем сообщения, получаемые с сервера
+    def run(self):
+        while True:
+            data = self.client.socket.recv(4096)
+            data_decode = pickle.loads(data)
+            data_show = self.client.functions[data_decode['key']](data_decode['info'])
+            # Посылаем сигнал из второго потока в GUI поток
+            # Добавление сообщения на экран
+            self.textbox_signal.emit(data_show)
+
 
 class Client:
-    def __init__(self, username, token, points, group):
+    def __init__(self, username, token, points, group, player):
         self.socket = socket.socket(
             socket.AF_INET,
             socket.SOCK_STREAM,
@@ -22,7 +49,80 @@ class Client:
         self.group = group
         self.room = 'none'
         self.role = 'none'
-        self.first_message = True
+        self.msg_handler = MessageHandler(self)
+        self.listening_thread = None
+        self.player = player
+        self.functions = [self.client_first_connection, self.client_correct_attack, self.client_code2,
+                          self.client_wrong_attack_or_defend, self.client_net_is_safe,
+                          self.client_correct_defend, self.client_correct_defend_question]
+
+    # Первое сообщение
+    def client_first_connection(self, args):
+        # args = [username, room, role, net]
+        username = args[0]
+        room = args[1]
+        role = args[2]
+        net = args[3]
+        # Создание сети
+        self.msg_handler.download_net_signal.emit(net[room], 0)
+        # Отрисовка сети
+        self.msg_handler.display_net_signal.emit(0)
+        self.role = role
+        self.room = room
+        data = 'Комната: {}. '.format(room + 1)
+        if role == 'attack':
+            data += '{}, Ваша задача: атаковать локальную сеть.'.format(username)
+        else:
+            data += '{}, Ваша задача: защитить локальную сеть.'.format(username)
+        return data
+
+    # Верная атака
+    def client_correct_attack(self, args):
+        # args = [username, result]
+        username = args[0]
+        result = str(args[1])
+        attack = result.split(')')[0]
+        data = '{} предпринял атаку: {}.'.format(username, result)
+        self.msg_handler.correct_attack_signal.emit(int(attack.split(' ')[1].split('.')[3][1]), Computer)
+        return data
+
+    def client_code2(self, args):
+        # args = [result]
+        result = str(args[0])
+        data = result
+        return data
+
+    def client_wrong_attack_or_defend(self, args):
+        # args = [username, ips]
+        username = args[0]
+        try:
+            ips = args[1]
+            data = ips
+        except:
+            data = '{}, нельзя использовать данную команду.'.format(username)
+        return data
+
+    def client_net_is_safe(self, args):
+        # args = [username]
+        username = args[0]
+        data = '{}, на данную сеть не совершенно никаких атак.'.format(username)
+        return data
+
+    def client_correct_defend(self, args):
+        # args = [username, result]
+        username = args[0]
+        result = args[1]
+        data = '{} предпринял защиту ({}) и воздействовал вопросом.'.format(username, result)
+        defend = result.split(')')[0]
+        self.msg_handler.correct_defend_signal.emit(int(defend.split(' ')[7].split('.')[3][1]), Computer)
+        return data
+
+    def client_correct_defend_question(self, args):
+        # args = [question, correct]
+        question = args[0]
+        correct = args[1]
+        self.player.flag_correct = correct
+        return question
 
 
 class Server:
@@ -82,7 +182,7 @@ class Server:
 
     async def server_first_connection(self, args):
         # args = [token, username, points, ip, listened_socket]
-        print('Enter')
+        print('server_first_connection')
         token = args[0]
         username = args[1]
         score = args[2]
@@ -100,7 +200,7 @@ class Server:
         self.available_rooms.remove(room)
         self.info[room]['role'].remove(role)
 
-        data = {'key': 0, 'info': [username, room, role, self.admin.canvas.net]}
+        data = {'key': 0, 'info': [username, room, role, self.admin.canvas.nets]}
 
         data_encode = pickle.dumps(data)
         await self.send_data(room, data_encode, socket=listened_socket)
@@ -138,6 +238,8 @@ class Server:
             if result == "ipconfig":
                 ips = '\n'.join(self.ip_list)
                 data = {'key': 3, 'info': [username, ips]}
+            else:
+                data = {'key': 3, 'info': [username]}
             socket_to_send = listened_socket
 
         # Обновление значений в эксель таблице
@@ -225,6 +327,7 @@ class Server:
     # Просмотр сообщений от клиентов
     async def listen_socket(self, ip, listened_socket=None):
         if not listened_socket:
+            print('listened_socket is null')
             return
 
         while True:

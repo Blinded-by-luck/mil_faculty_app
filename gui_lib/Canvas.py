@@ -1,11 +1,10 @@
 import os
-from pathlib import Path
+
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QLine, QPointF
-from PyQt5.QtGui import QPixmap, QBrush, QPen, QColor, QFont
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsPixmapItem, QLabel, QGraphicsPathItem, QGraphicsRectItem, \
-    QGraphicsLineItem
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QPen, QColor, QFont
+from PyQt5.QtWidgets import QGraphicsView, QLabel, QGraphicsLineItem
 from enum import Enum
 
 from gui_lib.Arc import Arc
@@ -107,8 +106,10 @@ class Custom_label(QLabel):
                     else:
                         self.canvas.node_to = self.model_item
                         self.canvas.make_selected(self)
-                        arc = self.canvas.add_arc_to_model(self.canvas.node_from, self.canvas.node_to)
-                        self.canvas.draw_arc(arc)
+                        arc = self.canvas.add_arc_to_model(self.canvas.node_from, self.canvas.node_to,
+                                                           self.canvas.interface_window.current_room)
+                        visual_arc = self.canvas.create_visual_arc(arc, False)
+                        self.scene().addItem(visual_arc)
                         self.canvas.reset_temp_data()
             if event.button() == Qt.RightButton:
                 if self.canvas.mouse_btn_mode == MOUSE_BTN_MODE.CHOOSE:
@@ -129,12 +130,12 @@ class Custom_label(QLabel):
 """Фронтенд сети"""
 class Canvas(QGraphicsView):
 
-    def __init__(self, parent=None, root=None, canvas_working_mode=0):
+    def __init__(self, parent=None, root=None, nets=None, canvas_working_mode=0):
         QGraphicsView.__init__(self, parent=parent)
         # Обратная ссылка на главное окно
         self.interface_window = root
         # TODO Массив сетей
-        self.net = Net({}, {}, {}, {}, {})
+        self.nets = nets
         self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
         self.working_mode = canvas_working_mode
         path = '..' + os.sep + '..' + os.sep + 'Models' + os.sep
@@ -167,18 +168,27 @@ class Canvas(QGraphicsView):
             print("Delete event")
             return
 
-    def add_arc_to_model(self, node_from, node_to):
+    def add_arc_to_model(self, node_from, node_to, net_idx=0):
         arc = Arc(node_from, node_to)
-        self.net.arcs[arc.id] = arc
+        self.nets[net_idx].arcs[arc.id] = arc
         return arc
 
-    def draw_arc(self, arc):
-        custom_line = Custom_line(canvas=self, model_item=arc,
-                                  x1=self.node_from.x + self.computer_pixmap.width() / 2,
-                                  y1=self.node_from.y + self.computer_pixmap.height() / 2,
-                                  x2=self.node_to.x + self.computer_pixmap.width() / 2,
-                                  y2=self.node_to.y + self.computer_pixmap.height() / 2)
-        self.scene().addItem(custom_line)
+    def create_visual_arc(self, arc, is_download):
+        if is_download:
+            x1 = arc.node_from.x
+            y1 = arc.node_from.y
+            x2 = arc.node_to.x
+            y2 = arc.node_to.y
+        else:
+            x1 = self.node_from.x
+            y1 = self.node_from.y
+            x2 = self.node_to.x
+            y2 = self.node_to.y
+        return Custom_line(canvas=self, model_item=arc,
+                           x1=x1 + self.computer_pixmap.width() / 2,
+                           y1=y1 + self.computer_pixmap.height() / 2,
+                           x2=x2 + self.computer_pixmap.width() / 2,
+                           y2=y2 + self.computer_pixmap.height() / 2)
 
     def make_selected(self, figure):
         figure.is_select = True
@@ -246,6 +256,28 @@ class Canvas(QGraphicsView):
             return self.fired_commutator_pixmap
         return ValueError("Unrecognized class")
 
+    @QtCore.pyqtSlot(int)
+    def display_net(self, net_idx=0):
+        self.reset_temp_data()
+        Node.reset_counter()
+        Arc.reset_counter()
+        self.scene().clear()
+        for key_node in self.nets[net_idx].nodes:
+            node = self.nets[net_idx].nodes[key_node]
+            pixmap = self.get_appropriate_pixmap(node.__class__)
+            custom_label = Custom_label(pixmap=pixmap, canvas=self, model_item=node)
+            self.scene().addWidget(custom_label)
+            self.scene().addWidget(custom_label.title)
+
+        for key_arc in self.nets[net_idx].arcs:
+            arc = self.nets[net_idx].arcs[key_arc]
+            custom_line = self.create_visual_arc(arc, True)
+            self.scene().addItem(custom_line)
+
+    @QtCore.pyqtSlot(Net, int)
+    def download_net(self, net, net_idx=0):
+        self.nets[net_idx] = net
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         if self.working_mode == CANVAS_WORKING_MODE.EDIT:
@@ -258,7 +290,7 @@ class Canvas(QGraphicsView):
                     node = Computer(point.x() - self.computer_pixmap.width() / 2,
                                     point.y() - self.computer_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.computer_pixmap, canvas=self, model_item=node)
-                    self.net.add_node(node)
+                    self.nets[self.interface_window.current_room].add_node(node)
                     self.scene().addWidget(custom_label)
                     self.scene().addWidget(custom_label.title)
                     return
@@ -267,7 +299,7 @@ class Canvas(QGraphicsView):
                     node = Router(point.x() - self.router_pixmap.width() / 2,
                                   point.y() - self.router_pixmap.height() / 2, ingoing_arcs=[], outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.router_pixmap, canvas=self, model_item=node)
-                    self.net.add_node(node)
+                    self.nets[self.interface_window.current_room].add_node(node)
                     self.scene().addWidget(custom_label)
                     self.scene().addWidget(custom_label.title)
                     return
@@ -277,7 +309,7 @@ class Canvas(QGraphicsView):
                                       point.y() - self.commutator_pixmap.height() / 2, ingoing_arcs=[],
                                       outgoing_arcs=[])
                     custom_label = Custom_label(pixmap=self.commutator_pixmap, canvas=self, model_item=node)
-                    self.net.add_node(node)
+                    self.nets[self.interface_window.current_room].add_node(node)
                     self.scene().addWidget(custom_label)
                     self.scene().addWidget(custom_label.title)
                     return
