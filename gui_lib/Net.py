@@ -2,7 +2,6 @@ from gui_lib.Nodes import Node
 from gui_lib.Nodes import Commutator
 from gui_lib.Nodes import Computer
 from gui_lib.Nodes import Router
-from gui_lib.Arc import Arc
 
 """
 Класс представляющий сеть. Хранит всю необходимую информацию о сети.

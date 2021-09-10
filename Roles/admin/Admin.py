@@ -5,28 +5,23 @@ from threading import Thread
 import numpy as np
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QFileDialog, QApplication, QTableView, QTableWidget, QTableWidgetItem, QAbstractItemView, \
+from PyQt5.QtWidgets import QFileDialog, QApplication, QTableWidget, QTableWidgetItem, QAbstractItemView, \
     QSizePolicy
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt
 
-#from Roles.admin.design_admin import Ui_interface_admin
-from Server_Client.Sockets import Client, Server
-import asyncio
-import pandas as pd
-from datetime import datetime
-import xlsxwriter
+from Server_Client.Sockets import Server
 
-from gui_lib.Arc import Arc
-from gui_lib.Canvas import Canvas, CANVAS_WORKING_MODE, MOUSE_BTN_MODE, Custom_label, Custom_line
+from gui_lib.Canvas import Canvas, CANVAS_WORKING_MODE, MOUSE_BTN_MODE
 from gui_lib.Net import Net
-from gui_lib.Nodes import Node
+
 
 
 class Admin(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+
         # инициализация сервера
-        self.server = Server()
+        self.server = Server(self)
         self.setup_server()
 
         # Отрисовка
@@ -270,7 +265,11 @@ class Admin(QtWidgets.QMainWindow):
 
         self.scene = QtWidgets.QGraphicsScene()
         # self.scene.setSceneRect(0, 0, 800, 300)
-        self.canvas = Canvas(self.stacked_widget, self, CANVAS_WORKING_MODE.EDIT)
+        nets = np.zeros(12, dtype=Net)
+        for i in range(nets.size):
+            nets[i] = Net({}, {}, {}, {}, {})
+
+        self.canvas = Canvas(self.stacked_widget, self, nets, CANVAS_WORKING_MODE.EDIT)
         self.canvas.setStyleSheet("border: 1px solid grey;"
                                   "background-color: rgb(255, 255, 255);")
         # self.canvas.setGeometry(QtCore.QRect(90, 79, 750, 250))
@@ -352,15 +351,13 @@ class Admin(QtWidgets.QMainWindow):
         self.save_btn.setText(_translate("interface_admin", "Сохранить карту"))
         self.return_btn.setText(_translate("interface_admin", "В холл"))
         self.download_btn.setText(_translate("interface_admin", "Загрузить карту"))
-        self.send_btn.setText(_translate("interface_admin", "Отправить карту игрокам"))
 
     def cell_clicked(self, i):
         sender = self.sender()
         if sender.currentRow() == 0 & sender.currentColumn() == 0:
-            # TODO отрисовка i карты на канвасе
-            # TODO Показать или скрыть кнопки в зависимости от того, отправлена ли была карта
-
             self.current_room = i
+            self.canvas.display_net(self.current_room)
+            # TODO Показать или скрыть кнопки в зависимости от того, отправлена ли была карта
             self.header_room_table.item(0, 0).setText("Комната №" + str(i + 1))
             # TODO Установка имен игроков соответствующей комнаты (где-то хранятся)
             self.header_room_table.item(1, 0).setText("Проскурин Валерий")
@@ -405,7 +402,7 @@ class Admin(QtWidgets.QMainWindow):
                                                    options=options)
         if file_name:
             with open(file_name, 'wb') as file:
-                pickle.dump(self.canvas.net, file)
+                pickle.dump(self.canvas.nets[self.current_room], file)
 
     def return_btn_click(self):
         self.current_room = -1
@@ -413,39 +410,21 @@ class Admin(QtWidgets.QMainWindow):
 
     def download_btn_click(self):
         # отлов исключений
-        self.canvas.reset_temp_data()
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getOpenFileName(self, "Открыть файл", "", "Special Files (*.mlbin)", options=options)
         if file_name:
             with open(file_name, 'rb') as file:
-                Node.reset_counter()
-                Arc.reset_counter()
-                self.canvas.net = pickle.load(file)
-                self.scene.clear()
-                for key_node in self.canvas.net.nodes:
-                    node = self.canvas.net.nodes[key_node]
-                    pixmap = self.canvas.get_appropriate_pixmap(node.__class__)
-                    custom_label = Custom_label(pixmap=pixmap, canvas=self.canvas, model_item=node)
-                    self.canvas.scene().addWidget(custom_label)
-                    self.canvas.scene().addWidget(custom_label.title)
-
-                for key_arc in self.canvas.net.arcs:
-                    arc = self.canvas.net.arcs[key_arc]
-                    custom_line = Custom_line(canvas=self.canvas, model_item=arc,
-                                              x1=arc.node_from.x + self.canvas.computer_pixmap.width() / 2,
-                                              y1=arc.node_from.y + self.canvas.computer_pixmap.height() / 2,
-                                              x2=arc.node_to.x + self.canvas.computer_pixmap.width() / 2,
-                                              y2=arc.node_to.y + self.canvas.computer_pixmap.height() / 2)
-                    self.canvas.scene().addItem(custom_line)
+                self.canvas.download_net(pickle.load(file), self.current_room)
+                self.canvas.display_net(self.current_room)
 
     # отправка карты и переход в не редактируемый режим
     def send_btn_click(self):
+        # FIXME
         # TODO Вызвать функцию передачи карты игрокам соответствующей комнаты (из массива функций)
-        self.hide_buttons()
-        self.canvas.working_mode = CANVAS_WORKING_MODE.GAME
-        net = pickle.dumps(self.canvas.net)
-        for user in self.server.users:
-            user.sendall(net)
+        pass
+        # net = pickle.dumps(self.canvas.nets)
+        # for user in self.server.users:
+        #     user.sendall(net)
 
     def hide_buttons(self):
         self.add_computer_btn.hide()
@@ -454,13 +433,12 @@ class Admin(QtWidgets.QMainWindow):
         self.add_arc_btn.hide()
         self.save_btn.hide()
         self.download_btn.hide()
-        self.send_btn.hide()
 
     # Настройка сервера
     def setup_server(self):
         self.server.socket.bind(('127.0.0.1', 1234))
         # self.server.socket.bind(('172.18.7.101', 1234))
-        self.server.socket.listen(3)
+        self.server.socket.listen(24)
         self.server.socket.setblocking(False)
         print('Сервер запущен')
 

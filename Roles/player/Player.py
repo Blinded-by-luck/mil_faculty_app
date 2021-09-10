@@ -1,32 +1,25 @@
-import time
-
+import socket
+import numpy as np
 from PyQt5 import QtCore, QtWidgets
-from sys import exit
-from threading import Thread
-
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QApplication, QVBoxLayout, QPushButton, QSizePolicy, QLabel, QLineEdit, \
     QTextBrowser, QPlainTextEdit, QHBoxLayout
 import sys
-
+from gui_lib.Net import Net
 from Server_Client.Sockets import Client
 from Test_app.Test_app import TestApp
 import pickle
-from gui_lib.Arc import Arc
-from gui_lib.Canvas import Custom_line, Custom_label, Canvas, CANVAS_WORKING_MODE
-from gui_lib.Nodes import Node, Computer
+from gui_lib.Canvas import Canvas, CANVAS_WORKING_MODE
+
 
 
 class Player(QtWidgets.QMainWindow):
 
     def __init__(self, username, token, points, group):
         super().__init__()
-        self.client = Client(username, token, points, group)
+        self.client = Client(username, token, points, group, self)
         self.flag_correct = None
-        self.functions = [self.client_first_connection, self.client_correct_attack, self.client_code2,
-                          self.client_wrong_attack_or_defend, self.client_net_is_safe,
-                          self.client_correct_defend, self.client_correct_defend_question]
 
         # Отрисовка
         self.setObjectName("interface_player")
@@ -38,6 +31,8 @@ class Player(QtWidgets.QMainWindow):
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbar.setObjectName("statusbar")
         self.setStatusBar(self.statusbar)
+
+        self.current_room = 0
 
         self.stacked_widget = QtWidgets.QStackedWidget()
         self.stacked_widget.setObjectName("stacked_widget")
@@ -110,7 +105,9 @@ class Player(QtWidgets.QMainWindow):
         self.header_layout_room.setObjectName("header_layout_room")
 
         self.scene = QtWidgets.QGraphicsScene()
-        self.canvas = Canvas(self.stacked_widget, self, CANVAS_WORKING_MODE.EDIT)
+        nets = np.zeros(1, Net)
+        nets[0] = Net({}, {}, {}, {}, {})
+        self.canvas = Canvas(self.stacked_widget, self, nets, CANVAS_WORKING_MODE.EDIT)
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.canvas.setStyleSheet("background-color: rgb(255, 255, 255);"
                                   "border: 1px solid grey")
@@ -223,25 +220,26 @@ class Player(QtWidgets.QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("interface_player", "Project"))
 
-    def restore_map(self, data):
-        # отлов исключений
-        self.canvas.reset_temp_data()
-        Node.reset_counter()
-        Arc.reset_counter()
-        self.canvas.net = pickle.loads(data)
-        self.scene.clear()
-        for key_node in self.canvas.net.nodes:
-            node = self.canvas.net.nodes[key_node]
-            pixmap = self.canvas.get_appropriate_pixmap(node)
-            custom_label = Custom_label(pixmap=pixmap, canvas=self.canvas, model_item=node)
-            self.canvas.scene().addWidget(custom_label)
+    @QtCore.pyqtSlot(str)
+    def terminal_set_text(self, data):
+        self.text_browser_room.append('>  ' + data)
 
-        for key_arc in self.canvas.net.arcs:
-            arc = self.canvas.net.arcs[key_arc]
-            custom_line = Custom_line(canvas=self.canvas, model_item=arc,
-                                      x1=arc.node_from.x, y1=arc.node_from.y,
-                                      x2=arc.node_to.x, y2=arc.node_to.y)
-            self.canvas.scene().addItem(custom_line)
+    def msg_listener_start(self):
+        # создадим поток
+        self.client.listening_thread = QtCore.QThread()
+        # перенесём объект в другой поток
+        msg_handler = self.client.msg_handler
+        msg_handler.moveToThread(self.client.listening_thread)
+        # после чего подключим все сигналы и слоты
+        msg_handler.textbox_signal.connect(self.terminal_set_text)
+        msg_handler.download_net_signal.connect(self.canvas.download_net)
+        msg_handler.display_net_signal.connect(self.canvas.display_net)
+        msg_handler.correct_attack_signal.connect(self.attack_node)
+        msg_handler.correct_defend_signal.connect(self.defend_node)
+        # подключим сигнал старта потока к методу run у объекта, который должен выполнять код в другом потоке
+        self.client.listening_thread.started.connect(msg_handler.run)
+        # запустим поток
+        self.client.listening_thread.start()
 
     def connect_btn_click(self):
         try:
@@ -249,131 +247,48 @@ class Player(QtWidgets.QMainWindow):
                 (self.connection_line_edit.text().strip(), 1234)
             )
             self.client.socket.settimeout(None)
+            self.msg_listener_start()
+            data = {'key': 0, 'info': [self.client.token, self.client.username, self.client.points]}
+            data_pickle = pickle.dumps(data)
+            self.client.socket.send(data_pickle)
+            print(data)
             self.stacked_widget.setCurrentIndex(1)
-        except:
+
+        except socket.timeout:
+            alert = QMessageBox()
+            alert.setText('Превышено время ожидания от сервера!')
+            alert.exec_()
+
+        except ConnectionError:
             alert = QMessageBox()
             alert.setText('Ошибка подключения к серверу!')
             alert.exec_()
 
-    def download_btn_click(self):
-        # отлов исключений
-        self.download_btn.hide()
-        self.canvas.reset_temp_data()
-        net = self.client.socket.recv(1024)
-        self.canvas.net = pickle.loads(net)
-        self.scene.clear()
-        for key_node in self.canvas.net.nodes:
-            node = self.canvas.net.nodes[key_node]
-            pixmap = self.canvas.get_appropriate_pixmap(node.__class__)
-            custom_label = Custom_label(pixmap=pixmap, canvas=self.canvas, model_item=node)
-            self.canvas.scene().addWidget(custom_label)
-            self.canvas.scene().addWidget(custom_label.title)
-
-        for key_arc in self.canvas.net.arcs:
-            arc = self.canvas.net.arcs[key_arc]
-            custom_line = Custom_line(canvas=self.canvas, model_item=arc,
-                                      x1=arc.node_from.x + self.canvas.computer_pixmap.width() / 2,
-                                      y1=arc.node_from.y + self.canvas.computer_pixmap.height() / 2,
-                                      x2=arc.node_to.x + self.canvas.computer_pixmap.width() / 2,
-                                      y2=arc.node_to.y + self.canvas.computer_pixmap.height() / 2)
-            self.canvas.scene().addItem(custom_line)
-
-    # Первое сообщение
-    def client_first_connection(self, args):
-        # args = [username, room, role]
-        username = args[0]
-        room = args[1]
-        role = args[2]
-        self.client.role = role
-        self.client.room = room
-        data = 'Комната: {}. '.format(room + 1)
-        if role == 'attack':
-            data += '{}, Ваша задача: атаковать локальную сеть.'.format(username)
-        else:
-            data += '{}, Ваша задача: защитить локальную сеть.'.format(username)
-        return data
-
-    # Верная атака
-    def client_correct_attack(self, args):
-        # args = [username, result]
-        username = args[0]
-        result = str(args[1])
-        attack = result.split(')')[0]
-        data = '{} предпринял атаку: {}.'.format(username, result)
-        thread = Thread(target=self.attack_node, args=(int(attack.split(' ')[2]), Computer), daemon=True)
-        thread.start()
-        return data
-
-    def client_code2(self, args):
-        # args = [result]
-        result = str(args[0])
-        data = result
-        return data
-
-    def client_wrong_attack_or_defend(self, args):
-        # args = [username]
-        username = args[0]
-        data = '{}, нельзя использовать данную команду.'.format(username)
-        return data
-
-    def client_net_is_safe(self, args):
-        # args = [username]
-        username = args[0]
-        data = '{}, на данную сеть не совершенно никаких атак.'.format(username)
-        return data
-
-    def client_correct_defend(self, args):
-        # args = [username, result]
-        username = args[0]
-        result = args[1]
-        data = '{} предпринял защиту ({}) и воздействовал вопросом.'.format(username, result)
-        defend = result.split(')')[0]
-        self.defend_node(int(defend.split(' ')[2]), Computer)
-        return data
-
-    def client_correct_defend_question(self, args):
-        # args = [question, correct]
-        question = args[0]
-        correct = args[1]
-        self.flag_correct = correct
-        return question
-
-    # Считывание сообщений с сервера
-    # FIXME переделать структуру сообщений
-    def text_on_textBox(self):
-        while True:
-            data = self.client.socket.recv(2048)
-            data_decode = pickle.loads(data)
-            data_show = self.functions[data_decode['key']](data_decode['info'])
-            # Добавление сообщения на экран
-            # FIXME добавить получение карты передавать data (чистую) в restore_map()
-            # FIXME Незаконно менять объекты основного потока не в основном потоке
-            self.text_browser_room.append('>>> ' + data_show)
+        except Exception as exc:
+            print(exc)
 
     # Помечает соответствующую вершину красным
     # class_type - это тип класса: Computer, Router, Commutator
     # Возвращает true, если атака возможна и false иначе
+    @QtCore.pyqtSlot(int, type)
     def attack_node(self, id, class_type):
-        if id in self.canvas.net.nodes:
-            node = self.canvas.net.nodes[id]
+        if id in self.canvas.nets[0].nodes:
+            node = self.canvas.nets[0].nodes[id]
             pixmap = self.canvas.get_appropriate_pixmap(class_type)
             fired_pixmap = self.canvas.get_appropriate_fired_pixmap(class_type)
             if node.is_active:
                 node.is_under_attack = True
-                while node.is_under_attack:
-                    node.custom_widget.setPixmap(fired_pixmap)
-                    time.sleep(1)
-                    node.custom_widget.setPixmap(pixmap)
-                    time.sleep(1)
+                node.custom_widget.setPixmap(fired_pixmap)
                 return True
         return False
 
     # Помечает соответствующую вершину черным
     # class_type - это тип класса: Computer, Router, Commutator
     # Возвращает true, если защита возможна и false иначе
+    @QtCore.pyqtSlot(int, type)
     def defend_node(self, id, class_type):
-        if id in self.canvas.net.nodes:
-            node = self.canvas.net.nodes[id]
+        if id in self.canvas.nets[0].nodes:
+            node = self.canvas.nets[0].nodes[id]
             if node.is_active:
                 if node.is_under_attack:
                     pixmap = self.canvas.get_appropriate_pixmap(class_type)
@@ -386,7 +301,6 @@ class Player(QtWidgets.QMainWindow):
     def display_defender_btn_click(self):
         f = open('defender_cheat_sheet.txt', 'r')
         message_box = QMessageBox()
-        message_box.setMinimumSize(800, 600)
         message_box.setText(f.read())
         f.close()
         message_box.exec_()
@@ -400,27 +314,20 @@ class Player(QtWidgets.QMainWindow):
         message_box.exec_()
 
     def send_msg_btn_click(self):
-        listen_thread = Thread(target=self.text_on_textBox)
-        listen_thread.start()
         self.plain_text_edit_room.setPlaceholderText('Введите команду')
-
-        if self.client.first_message:
-            data = {'key': 0, 'info': [self.client.token, self.client.username, self.client.points]}
-            self.client.first_message = False
+        user_answer = self.plain_text_edit_room.toPlainText()
+        if self.flag_correct is not None:
+            if user_answer != self.flag_correct:
+                result = '0'
+            else:
+                result = '1'
+            self.flag_correct = None
         else:
-            user_answer = self.plain_text_edit_room.toPlainText()
-            if self.flag_correct is not None:
-                if user_answer != self.flag_correct:
-                    result = '0'
-                else:
-                    result = '1'
-                self.flag_correct = None
-            else:
-                result = user_answer
-            if self.client.role == 'attack':
-                data = {'key': 1, 'info': [self.client.username, self.client.room, result]}
-            else:
-                data = {'key': 2, 'info': [self.client.username, self.client.room, result]}
+            result = user_answer
+        if self.client.role == 'attack':
+            data = {'key': 1, 'info': [self.client.username, self.client.room, result]}
+        else:
+            data = {'key': 2, 'info': [self.client.username, self.client.room, result]}
 
         data_pickle = pickle.dumps(data)
         self.client.socket.send(data_pickle)
@@ -439,7 +346,8 @@ if __name__ == "__main__":
     group = test.get_group()
     exit_yn = test.get_exit_yn()
 
-    if points < 7 and exit_yn == 0:
+    # if points < 7 and exit_yn == 0:
+    if points < 7:
         app1 = QtWidgets.QApplication(sys.argv)
         player = Player(username, token, points, group)
         player.show()
