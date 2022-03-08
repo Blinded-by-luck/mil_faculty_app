@@ -109,7 +109,7 @@ class Custom_label(QLabel):
                         arc = self.canvas.add_arc_to_model(self.canvas.node_from, self.canvas.node_to,
                                                            self.canvas.interface_window.current_room)
                         visual_arc = self.canvas.create_visual_arc(arc, False)
-                        self.scene().addItem(visual_arc)
+                        self.canvas.scene().addItem(visual_arc)
                         self.canvas.reset_temp_data()
             if event.button() == Qt.RightButton:
                 if self.canvas.mouse_btn_mode == MOUSE_BTN_MODE.CHOOSE:
@@ -134,7 +134,6 @@ class Canvas(QGraphicsView):
         QGraphicsView.__init__(self, parent=parent)
         # Обратная ссылка на главное окно
         self.interface_window = root
-        # TODO Массив сетей
         self.nets = nets
         self.mouse_btn_mode = MOUSE_BTN_MODE.CHOOSE
         self.working_mode = canvas_working_mode
@@ -273,6 +272,8 @@ class Canvas(QGraphicsView):
             arc = self.nets[net_idx].arcs[key_arc]
             custom_line = self.create_visual_arc(arc, True)
             self.scene().addItem(custom_line)
+        Node.Counter = len(self.nets[net_idx].nodes) + 1
+        Arc.Counter = len(self.nets[net_idx].arcs) + 1
 
     @QtCore.pyqtSlot(Net, int)
     def download_net(self, net, net_idx=0):

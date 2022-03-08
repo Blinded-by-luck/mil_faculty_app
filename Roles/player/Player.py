@@ -1,4 +1,6 @@
 import socket
+from functools import partial
+
 import numpy as np
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QFont
@@ -13,12 +15,12 @@ import pickle
 from gui_lib.Canvas import Canvas, CANVAS_WORKING_MODE
 
 
-
 class Player(QtWidgets.QMainWindow):
 
-    def __init__(self, username, token, points, group):
+    def __init__(self, username, platoon, test_scores):
         super().__init__()
-        self.client = Client(username, token, points, group, self)
+        self.client = Client(username, platoon, test_scores, self)
+        # FIXME Refactor
         self.flag_correct = None
 
         # Отрисовка
@@ -62,7 +64,6 @@ class Player(QtWidgets.QMainWindow):
         self.connection_label = QLabel()
         self.connection_label.setObjectName("connection_label")
         self.connection_label.setText("Введите ip сервера:")
-        print(self.connection_label.sizeHint())
         font = QFont("Helvetica", 14)
         self.connection_label.setFont(font)
 
@@ -76,12 +77,26 @@ class Player(QtWidgets.QMainWindow):
         self.connect_btn.setText("Подключиться")
         self.connect_btn.setMinimumSize(QtCore.QSize(200, 40))
         self.connect_btn.clicked.connect(self.connect_btn_click)
-        self.connect_btn.setStyleSheet("QPushButton {background: #03a9f4;                   \
+        self.connect_btn.setStyleSheet(
+            #language=css
+            "QPushButton {background: #03a9f4;                   \
                                         color: #fff; border-radius: 15px;                   \
                                         font-size: 12pt;                                    \
                                         font-family: Century Gothic, sans-serif;}           \
                                         QPushButton:hover {background-color:#64bee8;}       \
                                         QPushButton:pressed {background-color:#03a9f4;}")
+
+        self.reconnect_btn = QPushButton()
+        self.reconnect_btn.setObjectName("reconnect_btn")
+        self.reconnect_btn.setText("Переподключиться")
+        self.reconnect_btn.setMinimumSize(QtCore.QSize(200, 40))
+        self.reconnect_btn.clicked.connect(partial(self.connect_btn_click, True))
+        self.reconnect_btn.setStyleSheet("QPushButton {background: #03a9f4;                   \
+                                                color: #fff; border-radius: 15px;                   \
+                                                font-size: 12pt;                                    \
+                                                font-family: Century Gothic, sans-serif;}           \
+                                                QPushButton:hover {background-color:#64bee8;}       \
+                                                QPushButton:pressed {background-color:#03a9f4;}")
 
         self.vertical_spacer_connection = QtWidgets.QSpacerItem(0, int(desktop_rect.height() / 2.5),
                                                                 QSizePolicy.Ignored,
@@ -90,6 +105,7 @@ class Player(QtWidgets.QMainWindow):
         self.main_layout_connection.addWidget(self.connection_label, alignment=Qt.AlignCenter)
         self.main_layout_connection.addWidget(self.connection_line_edit, alignment=Qt.AlignCenter)
         self.main_layout_connection.addWidget(self.connect_btn, alignment=Qt.AlignCenter)
+        self.main_layout_connection.addWidget(self.reconnect_btn, alignment=Qt.AlignCenter)
         self.main_layout_connection.addSpacerItem(self.vertical_spacer_connection)
         # end main_layout_connection content
 
@@ -107,7 +123,7 @@ class Player(QtWidgets.QMainWindow):
         self.scene = QtWidgets.QGraphicsScene()
         nets = np.zeros(1, Net)
         nets[0] = Net({}, {}, {}, {}, {})
-        self.canvas = Canvas(self.stacked_widget, self, nets, CANVAS_WORKING_MODE.EDIT)
+        self.canvas = Canvas(self.stacked_widget, self, nets, CANVAS_WORKING_MODE.GAME)
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.canvas.setStyleSheet("background-color: rgb(255, 255, 255);"
                                   "border: 1px solid grey")
@@ -124,6 +140,7 @@ class Player(QtWidgets.QMainWindow):
 
         self.plain_text_edit_room = QPlainTextEdit()
         self.plain_text_edit_room.setObjectName("plain_text_edit_room")
+        self.plain_text_edit_room.setPlaceholderText('Введите команду')
         self.plain_text_edit_room.setMinimumSize(QtCore.QSize(500, 70))
         self.plain_text_edit_room.setMaximumSize(QtCore.QSize(desktop_rect.width(), 70))
         self.plain_text_edit_room.setStyleSheet("background: white;"
@@ -163,7 +180,7 @@ class Player(QtWidgets.QMainWindow):
         self.header_room.setObjectName("header_room")
         self.header_room.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self.header_room.setFixedHeight(50)
-        self.header_room.setText("Комната № 1")
+        self.header_room.setText("Комната №")
         # self.header_room.setAlignment(Qt.AlignCenter)
         self.header_room.setReadOnly(True)
         self.header_room.setStyleSheet("font-size: 16pt;"
@@ -231,9 +248,10 @@ class Player(QtWidgets.QMainWindow):
         msg_handler = self.client.msg_handler
         msg_handler.moveToThread(self.client.listening_thread)
         # после чего подключим все сигналы и слоты
-        msg_handler.textbox_signal.connect(self.terminal_set_text)
+        msg_handler.terminal_signal.connect(self.terminal_set_text)
         msg_handler.download_net_signal.connect(self.canvas.download_net)
         msg_handler.display_net_signal.connect(self.canvas.display_net)
+        msg_handler.header_room_signal.connect(self.header_room_set_text)
         msg_handler.correct_attack_signal.connect(self.attack_node)
         msg_handler.correct_defend_signal.connect(self.defend_node)
         # подключим сигнал старта потока к методу run у объекта, который должен выполнять код в другом потоке
@@ -241,17 +259,15 @@ class Player(QtWidgets.QMainWindow):
         # запустим поток
         self.client.listening_thread.start()
 
-    def connect_btn_click(self):
+    def connect_btn_click(self, is_reconnect=False):
         try:
             self.client.socket.connect(
-                (self.connection_line_edit.text().strip(), 1234)
+                (self.connection_line_edit.text().strip(), self.client.PORT)
             )
             self.client.socket.settimeout(None)
+            self.client.is_reconnect = is_reconnect
+            # Слушаем сообщения от сервера в отдельном потоке
             self.msg_listener_start()
-            data = {'key': 0, 'info': [self.client.token, self.client.username, self.client.points]}
-            data_pickle = pickle.dumps(data)
-            self.client.socket.send(data_pickle)
-            print(data)
             self.stacked_widget.setCurrentIndex(1)
 
         except socket.timeout:
@@ -266,6 +282,10 @@ class Player(QtWidgets.QMainWindow):
 
         except Exception as exc:
             print(exc)
+
+    @QtCore.pyqtSlot(str)
+    def header_room_set_text(self, str):
+        self.header_room.setText(str)
 
     # Помечает соответствующую вершину красным
     # class_type - это тип класса: Computer, Router, Commutator
@@ -299,15 +319,14 @@ class Player(QtWidgets.QMainWindow):
         return False
 
     def display_defender_btn_click(self):
-        f = open('defender_cheat_sheet.txt', 'r')
+        f = open('defender_cheat_sheet.txt', 'r', encoding="utf-8")
         message_box = QMessageBox()
         message_box.setText(f.read())
         f.close()
         message_box.exec_()
 
-
     def display_attacker_btn_click(self):
-        f = open('attacker_cheat_sheet.txt', 'r')
+        f = open('attacker_cheat_sheet.txt', 'r', encoding="utf-8")
         message_box = QMessageBox()
         message_box.setText(f.read())
         f.close()
@@ -342,13 +361,13 @@ if __name__ == "__main__":
 
     username = test.get_username()
     token = test.get_token()
-    points = test.get_points()
-    group = test.get_group()
+    test_scores = test.get_points()
+    platoon = test.get_group()
     exit_yn = test.get_exit_yn()
 
     # if points < 7 and exit_yn == 0:
-    if points < 7:
+    if test_scores < 7:
         app1 = QtWidgets.QApplication(sys.argv)
-        player = Player(username, token, points, group)
+        player = Player(username, platoon, test_scores)
         player.show()
         sys.exit(app1.exec_())

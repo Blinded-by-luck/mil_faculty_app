@@ -9,11 +9,10 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QTableWidget, QTableWidge
     QSizePolicy
 from PyQt5.QtCore import Qt
 
-from Server_Client.Sockets import Server
+from Server_Client.Sockets import Server, user_id_to_room_number, PLAYER_ROLE
 
 from gui_lib.Canvas import Canvas, CANVAS_WORKING_MODE, MOUSE_BTN_MODE
 from gui_lib.Net import Net
-
 
 
 class Admin(QtWidgets.QMainWindow):
@@ -22,7 +21,6 @@ class Admin(QtWidgets.QMainWindow):
 
         # инициализация сервера
         self.server = Server(self)
-        self.setup_server()
 
         # Отрисовка
         self.setObjectName("interface_admin")
@@ -109,12 +107,12 @@ class Admin(QtWidgets.QMainWindow):
             item.setTextAlignment(Qt.AlignCenter)
             table.setItem(0, 0, item)
 
-            item = QTableWidgetItem("Проскурин Валерий Геннадьевич")
+            item = QTableWidgetItem("Фамилия и имя нападающего")
             item.setFont(font)
             item.setTextAlignment(Qt.AlignCenter)
             table.setItem(1, 0, item)
 
-            item = QTableWidgetItem("ФИО 2 игрока")
+            item = QTableWidgetItem("Фамилия и имя защитника")
             item.setFont(font)
             item.setTextAlignment(Qt.AlignCenter)
             table.setItem(2, 0, item)
@@ -241,20 +239,8 @@ class Admin(QtWidgets.QMainWindow):
                                         QPushButton:hover {background-color:#64bee8;}       \
                                         QPushButton:pressed {background-color:#03a9f4;}")
 
-        self.send_btn = QtWidgets.QPushButton()
-        self.send_btn.setObjectName("send_btn")
-        self.send_btn.setMinimumSize(QtCore.QSize(200, 40))
-        self.send_btn.clicked.connect(self.send_btn_click)
-        self.send_btn.setStyleSheet("QPushButton {background: #03a9f4;                  \
-                                    color: #fff; border-radius: 15px;                   \
-                                    font-size: 12pt;                                    \
-                                    font-family: Century Gothic, sans-serif;}           \
-                                    QPushButton:hover {background-color:#64bee8;}       \
-                                    QPushButton:pressed {background-color:#03a9f4;}")
-
         self.horizontal_up_layout_room.addWidget(self.save_btn)
         self.horizontal_up_layout_room.addWidget(self.download_btn)
-        self.horizontal_up_layout_room.addWidget(self.send_btn)
         # end horizontal_up_layout_room content
 
         # horizontal_med_layout_room content
@@ -265,7 +251,7 @@ class Admin(QtWidgets.QMainWindow):
 
         self.scene = QtWidgets.QGraphicsScene()
         # self.scene.setSceneRect(0, 0, 800, 300)
-        nets = np.zeros(12, dtype=Net)
+        nets = np.zeros(self.server.ROOM_NUMBER, dtype=Net)
         for i in range(nets.size):
             nets[i] = Net({}, {}, {}, {}, {})
 
@@ -345,6 +331,16 @@ class Admin(QtWidgets.QMainWindow):
 
         self.retranslate_ui()
 
+        # Запуск сервера в отдельном потоке
+        self.server.server_thread = QtCore.QThread()
+        self.server.moveToThread(self.server.server_thread)
+        self.server.username_connect_signal.connect(self.set_username_to_table, type=Qt.DirectConnection)
+        self.server.header_room_table_signal.connect(self.refresh_header_room_table, type=Qt.DirectConnection)
+        self.server.canvas_signal.connect(self.set_canvas_mode, type=Qt.DirectConnection)
+        self.server.server_thread.started.connect(self.server.run)
+        self.server.server_thread.start()
+
+
     def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("interface_admin", "Проект"))
@@ -352,16 +348,48 @@ class Admin(QtWidgets.QMainWindow):
         self.return_btn.setText(_translate("interface_admin", "В холл"))
         self.download_btn.setText(_translate("interface_admin", "Загрузить карту"))
 
-    def cell_clicked(self, i):
+    @QtCore.pyqtSlot(int)
+    def set_canvas_mode(self, room):
+        if room == self.current_room:
+            self.hide_buttons()
+            self.canvas.working_mode = CANVAS_WORKING_MODE.GAME
+
+    @QtCore.pyqtSlot(int, PLAYER_ROLE, str)
+    def set_username_to_table(self, room, role, username):
+        if role == PLAYER_ROLE.ATTACKER:
+            self.room_tables[room].item(1, 0).setText(username)
+        elif role == PLAYER_ROLE.DEFENDER:
+            self.room_tables[room].item(2, 0).setText(username)
+        else:
+            print("Невалидная роль")
+        self.room_tables[room].resizeColumnsToContents()
+
+    @QtCore.pyqtSlot(int, PLAYER_ROLE, str)
+    def refresh_header_room_table(self, room, role, username):
+        if room == self.current_room:
+            if role == PLAYER_ROLE.ATTACKER:
+                self.header_room_table.item(1, 0).setText(username)
+            elif role == PLAYER_ROLE.DEFENDER:
+                self.header_room_table.item(2, 0).setText(username)
+            else:
+                print("Невалидная роль")
+        self.header_room_table.resizeColumnsToContents()
+
+    def cell_clicked(self, room):
         sender = self.sender()
         if sender.currentRow() == 0 & sender.currentColumn() == 0:
-            self.current_room = i
+            self.current_room = room
             self.canvas.display_net(self.current_room)
-            # TODO Показать или скрыть кнопки в зависимости от того, отправлена ли была карта
-            self.header_room_table.item(0, 0).setText("Комната №" + str(i + 1))
-            # TODO Установка имен игроков соответствующей комнаты (где-то хранятся)
-            self.header_room_table.item(1, 0).setText("Проскурин Валерий")
-            self.header_room_table.item(1, 1).setText("Проскурин Валерий")
+            self.header_room_table.item(0, 0).setText("Комната № " + str(room + 1))
+            if self.server.nets_were_sent[room]:
+                self.hide_buttons()
+                self.canvas.working_mode = CANVAS_WORKING_MODE.GAME
+            else:
+                self.show_buttons()
+                self.canvas.working_mode = CANVAS_WORKING_MODE.EDIT
+            names = self.server.get_names_by_room(room)
+            self.header_room_table.item(1, 0).setText(names[0])
+            self.header_room_table.item(1, 1).setText(names[1])
             self.header_room_table.resizeColumnsToContents()
             self.stacked_widget.setCurrentIndex(1)
 
@@ -417,15 +445,6 @@ class Admin(QtWidgets.QMainWindow):
                 self.canvas.download_net(pickle.load(file), self.current_room)
                 self.canvas.display_net(self.current_room)
 
-    # отправка карты и переход в не редактируемый режим
-    def send_btn_click(self):
-        # FIXME
-        # TODO Вызвать функцию передачи карты игрокам соответствующей комнаты (из массива функций)
-        pass
-        # net = pickle.dumps(self.canvas.nets)
-        # for user in self.server.users:
-        #     user.sendall(net)
-
     def hide_buttons(self):
         self.add_computer_btn.hide()
         self.add_router_btn.hide()
@@ -434,21 +453,16 @@ class Admin(QtWidgets.QMainWindow):
         self.save_btn.hide()
         self.download_btn.hide()
 
-    # Настройка сервера
-    def setup_server(self):
-        self.server.socket.bind(('127.0.0.1', 1234))
-        # self.server.socket.bind(('172.18.7.101', 1234))
-        self.server.socket.listen(24)
-        self.server.socket.setblocking(False)
-        print('Сервер запущен')
-
+    def show_buttons(self):
+        self.add_computer_btn.show()
+        self.add_router_btn.show()
+        self.add_commutator_btn.show()
+        self.add_arc_btn.show()
+        self.save_btn.show()
+        self.download_btn.show()
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     admin = Admin()
     admin.show()
-    server_thread = Thread(target=admin.server.start)
-    server_thread.start()
     app.exec()
-
-
